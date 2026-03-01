@@ -25,7 +25,12 @@ void LangEval(char* str) {
     tokenlist_t token_list = Scan(str, strlen(str));
 
     for (int i=0; i<token_list.length; i++) {
-        printf("%s\n", token_list.tokens[i].lexeme);
+        token_t token = token_list.tokens[i];
+        printf("Line: %3d | ", token.line);
+        for (int j=0; j<token.length; j++) {
+            printf("%c", token.start[j]);
+        }
+        printf("\n");
     }
 
     free(token_list.tokens);

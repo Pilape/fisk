@@ -4,25 +4,26 @@
 #include "../include/config.h"
 #include <stdlib.h>
 
-typedef struct {
-    enum {
+typedef enum {
 
-        // Literals
-        NUMBER, STRING,
+    // Literals
+    TOKEN_NUMBER, TOKEN_STRING,
         
-        // Single char
-        PLUS, MINUS, STAR, SLASH, PERCENT, EQUAL,
-        CURLY_L, CURLY_R, SQUARE_L, SQUARE_R,
+    // Single char
+    TOKEN_PLUS, TOKEN_MINUS, TOKEN_STAR, TOKEN_SLASH, TOKEN_PERCENT, TOKEN_EQUAL,
+    TOKEN_CURLY_L, TOKEN_CURLY_R, TOKEN_SQUARE_L, TOKEN_SQUARE_R,
 
-        // Keywords
-        SWAP, DROP, DUP,
+    // Keywords
+    TOKEN_SWAP, TOKEN_DROP, TOKEN_DUP,
 
-        // Default
-        FUNCTION,
+    FUNCTION, IDENTIFIER,
 
+} tokentype_t;
 
-    } type;
-    char lexeme[TOKEN_SIZE_LIMIT+1];
+typedef struct {
+    tokentype_t type;
+    unsigned int line, length;
+    char* start;
 } token_t;
 
 typedef struct {
