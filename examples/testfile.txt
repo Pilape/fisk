@@ -1,6 +1,26 @@
 oh wow this is epic
 
+
+(This is a comment, if you see this in output. rip)
+
+1 1(Comments ignore the spacing rule thing) +
+
+1(I think this should also work)SWAP
+
+"This is a string"
+
+( To test
+ multiline comments
+and line numbering
+later)
+
+"Technically"this works
+But not this"..."
+
+"Another (string)!"
                  
+OhNo!ThisTokenIsLongerThan32Characters.
+
 This truly was an Arcane Odyssey in this World of Magic where we had Arcane Adventures and did Online Fighting
 
 :)
