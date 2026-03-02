@@ -14,10 +14,16 @@ oh wow this is epic
 and line numbering
 later)
 
+"
+multiline
+string
+"
+
 "Technically"this works
 But not this"..."
 
 "Another (string)!"
+(A "comment")
                  
 OhNo!ThisTokenIsLongerThan32Characters.
 

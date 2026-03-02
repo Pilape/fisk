@@ -15,8 +15,10 @@ typedef enum {
 
     // Keywords
     TOKEN_SWAP, TOKEN_DROP, TOKEN_DUP,
+    TOKEN_NOT, TOKEN_AND, TOKEN_OR,
+    TOKEN_IF, TOKEN_IFELSE, TOKEN_FOR, TOKEN_WHILE,
 
-    FUNCTION, IDENTIFIER,
+    TOKEN_IDENTIFIER,
 
 } tokentype_t;
 
