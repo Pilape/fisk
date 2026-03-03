@@ -51,6 +51,44 @@ static int LexemeEquals(char* source, size_t start, size_t end, char* str, size_
     return 1;
 }
 
+// This is probably "fine" for perfomance. Atleast for now
+// Kinda messed up tho
+static inline tokentype_t TokenAssignType(char* source, size_t start, size_t end) {
+    // Fucked up macro
+    // Got too verbose my bad gang
+    // We're doing this to avoid using strlen() which iterates through the string. Instead we get it's length at compile time.
+    // We also have to subtract the null terminator from the length
+    #define IsKeyword(str) LexemeEquals(source, start, end, str, sizeof(str)-1)
+    
+    // Stack manipulation
+    if (IsKeyword("swap")) return TOKEN_SWAP;
+    else if (IsKeyword("dup")) return TOKEN_DUP;
+    else if (IsKeyword("drop")) return TOKEN_DROP;
+
+    // Math
+    else if (IsKeyword("+")) return TOKEN_PLUS;
+    else if (IsKeyword("-")) return TOKEN_MINUS;
+    else if (IsKeyword("*")) return TOKEN_STAR;
+    else if (IsKeyword("/")) return TOKEN_SLASH;
+    else if (IsKeyword("%")) return TOKEN_PERCENT;
+
+    // Logic
+    else if (IsKeyword("=")) return TOKEN_EQUAL;
+    else if (IsKeyword("or")) return TOKEN_OR;
+    else if (IsKeyword("and")) return TOKEN_AND;
+    else if (IsKeyword("not")) return TOKEN_NOT;
+
+    // Control flow
+    else if (IsKeyword("if")) return TOKEN_IF;
+    else if (IsKeyword("ifelse")) return TOKEN_IFELSE;
+    else if (IsKeyword("for")) return TOKEN_FOR;
+    else if (IsKeyword("while")) return TOKEN_WHILE;
+
+    return TOKEN_IDENTIFIER;
+
+    #undef IsKeyword
+}
+
 tokenlist_t Scan(char* input, size_t length) {
     tokenlist_t token_list = TokenListInit(16);
 
@@ -91,44 +129,7 @@ tokenlist_t Scan(char* input, size_t length) {
                     if (input[i] == ' ' || input[i] == '\n' || input[i] == '\t' || input[i] == '(') break;
                 }
 
-                // This is probably "fine" for perfomance. Atleast for now
-                // Kinda messed up tho
-
-                // Fucked up macro
-                // Got too verbose my bad gang
-                // We're doing this to avoid using strlen() which iterates through the string. Instead we get it's length at compile time.
-                // We also have to subtract the null terminator from the length
-                #define IsKeyword(str) LexemeEquals(input, start, i, str, sizeof(str)-1)
-                
-                tokentype_t type = TOKEN_IDENTIFIER;
-
-                // Stack manipulation
-                if (IsKeyword("swap")) type = TOKEN_SWAP;
-                else if (IsKeyword("dup")) type = TOKEN_DUP;
-                else if (IsKeyword("drop")) type = TOKEN_DROP;
-
-                // Math
-                else if (IsKeyword("+")) type = TOKEN_PLUS;
-                else if (IsKeyword("-")) type = TOKEN_MINUS;
-                else if (IsKeyword("*")) type = TOKEN_STAR;
-                else if (IsKeyword("/")) type = TOKEN_SLASH;
-                else if (IsKeyword("%")) type = TOKEN_PERCENT;
-
-                // Logic
-                else if (IsKeyword("=")) type = TOKEN_EQUAL;
-                else if (IsKeyword("or")) type = TOKEN_OR;
-                else if (IsKeyword("and")) type = TOKEN_AND;
-                else if (IsKeyword("not")) type = TOKEN_NOT;
-
-                // Control flow
-                else if (IsKeyword("if")) type = TOKEN_IF;
-                else if (IsKeyword("ifelse")) type = TOKEN_IFELSE;
-                else if (IsKeyword("for")) type = TOKEN_FOR;
-                else if (IsKeyword("while")) type = TOKEN_WHILE;
-
-                #undef IsKeyword
-
-                EmitToken(input, start, i, line, type, &token_list); 
+                EmitToken(input, start, i, line, TokenAssignType(input, start, i), &token_list); 
                 break;
             }
                 
