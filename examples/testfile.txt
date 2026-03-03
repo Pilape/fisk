@@ -3,7 +3,10 @@ oh wow this is epic
 
 (This is a comment, if you see this in output. rip)
 
-1 1(Comments ignore the spacing rule thing) +
+1 1(Comments ignore the spacing rule thing)+
+so"do"strings
+and[also]lists
+aswell{as}functions
 
 1(I think this should also work)SWAP
 
@@ -19,14 +22,15 @@ multiline
 string
 "
 
-"Technically"this works
-But not this"..."
+{ functionname code }
+
+[ list of things ]
 
 "Another (string)!"
 (A "comment")
                  
 OhNo!ThisTokenIsLongerThan32Characters.
 
-This truly was an Arcane Odyssey in this World of Magic where we had Arcane Adventures and did Online Fighting
+This truly was an Arcane Odyssey in this World of Magic where we had Arcane Adventures and did Online Fighting and told Adventure Stories.
 
 :)

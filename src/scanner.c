@@ -123,16 +123,32 @@ tokenlist_t Scan(char* input, size_t length) {
                 break;
             }
 
+            case '{':
+                EmitToken(input, i, i+1, line, TOKEN_CURLY_L, &token_list);
+                break;
+            case '}':
+                EmitToken(input, i, i+1, line, TOKEN_CURLY_R, &token_list);
+                break;
+
+            case '[':
+                EmitToken(input, i, i+1, line, TOKEN_SQUARE_L, &token_list);
+                break;
+            case ']':
+                EmitToken(input, i, i+1, line, TOKEN_SQUARE_R, &token_list);
+                break;
+            
+
             default: {
                 size_t start = i;
                 while (i++ < length) {  
-                    if (input[i] == ' ' || input[i] == '\n' || input[i] == '\t' || input[i] == '(') break;
+                    if (input[i] == ' ' || input[i] == '\n' || input[i] == '\t' || 
+                        input[i] == '(' || input[i] =='[' || input[i] == ']' ||
+                        input[i] == '{' || input[i] == '}') break;
                 }
 
                 EmitToken(input, start, i, line, TokenAssignType(input, start, i), &token_list); 
                 break;
-            }
-                
+            } 
         }
     }
     return token_list;
