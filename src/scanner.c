@@ -91,16 +91,17 @@ tokenlist_t Scan(char* input, size_t length) {
                     if (input[i] == ' ' || input[i] == '\n' || input[i] == '\t' || input[i] == '(') break;
                 }
 
-                tokentype_t type = TOKEN_IDENTIFIER;
-
                 // This is probably "fine" for perfomance. Atleast for now
                 // Kinda messed up tho
 
                 // Fucked up macro
                 // Got too verbose my bad gang
                 // We're doing this to avoid using strlen() which iterates through the string. Instead we get it's length at compile time.
-                #define IsKeyword(str) LexemeEquals(input, start, i, str, sizeof(str))
+                // We also have to subtract the null terminator from the length
+                #define IsKeyword(str) LexemeEquals(input, start, i, str, sizeof(str)-1)
                 
+                tokentype_t type = TOKEN_IDENTIFIER;
+
                 // Stack manipulation
                 if (IsKeyword("swap")) type = TOKEN_SWAP;
                 else if (IsKeyword("dup")) type = TOKEN_DUP;
