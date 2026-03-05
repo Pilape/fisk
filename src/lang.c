@@ -24,14 +24,14 @@ char* ReadFile(char* path) {
 void LangEval(char* str) {
     tokenlist_t token_list = Scan(str, strlen(str));
 
-    for (int i=0; i<token_list.length; i++) {
+    /*for (int i=0; i<token_list.length; i++) {
         token_t token = token_list.tokens[i];
         printf("Line: %2d | Type: %2d | ", token.line, token.type);
         for (int j=0; j<token.length; j++) {
             printf("%c", token.start[j]);
         }
         printf("\n");
-    }
+    }*/
 
     free(token_list.tokens);
 }
