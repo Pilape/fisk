@@ -40,6 +40,18 @@ static void EmitToken(char* code, size_t start, size_t end, unsigned int line, t
     TokenListAppend(token_list, new_token);
 }
 
+static inline int IsDigit(char c) {
+    if (c >= '0' && '9' >= c) return 1;
+    return 0;
+}
+
+static int IsNumber(char* source, size_t start, size_t end) {
+    for (int i=start; i<end; i++) {
+        if (!IsDigit(source[i])) return 0;
+    }
+    return 1;
+}
+
 static int LexemeEquals(char* source, size_t start, size_t end, char* str, size_t str_length) {
     int length = end-start;
     if (length != str_length) return 0;
@@ -60,8 +72,11 @@ static inline tokentype_t TokenAssignType(char* source, size_t start, size_t end
     // We also have to subtract the null terminator from the length
     #define IsKeyword(str) LexemeEquals(source, start, end, str, sizeof(str)-1)
     
+    // Number
+    if (IsNumber(source, start, end)) return TOKEN_NUMBER;
+
     // Stack manipulation
-    if (IsKeyword("swap")) return TOKEN_SWAP;
+    else if (IsKeyword("swap")) return TOKEN_SWAP;
     else if (IsKeyword("dup")) return TOKEN_DUP;
     else if (IsKeyword("drop")) return TOKEN_DROP;
 
@@ -83,6 +98,10 @@ static inline tokentype_t TokenAssignType(char* source, size_t start, size_t end
     else if (IsKeyword("ifelse")) return TOKEN_IFELSE;
     else if (IsKeyword("for")) return TOKEN_FOR;
     else if (IsKeyword("while")) return TOKEN_WHILE;
+
+    // Booleans
+    else if (IsKeyword("true")) return TOKEN_TRUE;
+    else if (IsKeyword("false")) return TOKEN_FALSE;
 
     return TOKEN_IDENTIFIER;
 
