@@ -19,7 +19,8 @@ typedef struct {
 
 typedef struct {
     unsigned int ip;
-    char bytecode[BYTECODE_MEMORY_SIZE];
+    unsigned int line; // For debug purposes
+    char bytecode[MAX_TOKEN_COUNT];
 
     struct {
         langvalue_t data[STACK_SIZE];
