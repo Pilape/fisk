@@ -3,10 +3,13 @@
 
 #include "include/vm.h"
 
+typedef unsigned int languint_t;
+typedef unsigned short langu16_t;
+
 typedef struct {
     langvm_t vm;
 
-} lang_h;
+} langctx_t;
 
 
 #endif

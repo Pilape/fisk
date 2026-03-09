@@ -1,5 +1,7 @@
 #include "../include/scanner.h"
+#include "../lang.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 static inline void TokenListAppend(tokenlist_t* list, token_t token) {
     list->tokens[list->token_count] = token;
@@ -10,7 +12,7 @@ static inline void TokenListAppend(tokenlist_t* list, token_t token) {
     }
 }
 
-static void EmitToken(char* code, size_t start, size_t end, unsigned int line, tokentype_t type, tokenlist_t* token_list) {
+static void EmitToken(char* code, languint_t start, languint_t end, languint_t line, tokentype_t type, tokenlist_t* token_list) {
     token_t new_token = {
         .line = line,
         .length = end-start,
@@ -26,14 +28,14 @@ static inline int IsDigit(char c) {
     return 0;
 }
 
-static int IsNumber(char* source, size_t start, size_t end) {
+static int IsNumber(char* source, languint_t start, languint_t end) {
     for (int i=start; i<end; i++) {
         if (!IsDigit(source[i])) return 0;
     }
     return 1;
 }
 
-static int LexemeEquals(char* source, size_t start, size_t end, char* str, size_t str_length) {
+static int LexemeEquals(char* source, languint_t start, languint_t end, char* str, languint_t str_length) {
     int length = end-start;
     if (length != str_length) return 0;
 
@@ -46,7 +48,7 @@ static int LexemeEquals(char* source, size_t start, size_t end, char* str, size_
 
 // This is probably "fine" for perfomance. Atleast for now
 // Kinda messed up tho
-static inline tokentype_t TokenAssignType(char* source, size_t start, size_t end) {
+static inline tokentype_t TokenAssignType(char* source, languint_t start, languint_t end) {
     // Fucked up macro
     // Got too verbose my bad gang
     // We're doing this to avoid using strlen() which iterates through the string. Instead we get it's length at compile time.
@@ -89,11 +91,11 @@ static inline tokentype_t TokenAssignType(char* source, size_t start, size_t end
     #undef IsKeyword
 }
 
-tokenlist_t Scan(char* input, size_t length) {
+tokenlist_t Scan(char* input, languint_t length) {
     tokenlist_t token_list = { 0 };
 
-    size_t i = 0;
-    unsigned int line = 1;
+    languint_t i = 0;
+    languint_t line = 1;
     while (i<length) {
         switch (input[i]) {
             case '\n':
@@ -114,7 +116,7 @@ tokenlist_t Scan(char* input, size_t length) {
             } 
 
             case '"': {
-                size_t start = i;
+                languint_t start = i;
                 while (i++ < length) {
                     if (input[i] == '\n') line++;
                     if (input[i] == '"') break;
@@ -144,7 +146,7 @@ tokenlist_t Scan(char* input, size_t length) {
             
 
             default: {
-                size_t start = i;
+                languint_t start = i;
                 while (i++ < length) {  
                     if (input[i] == ' ' || input[i] == '\n' || input[i] == '\t' || 
                         input[i] == '"' || input[i] == '(' || input[i] =='[' || input[i] == ']' ||
