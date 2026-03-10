@@ -4,29 +4,23 @@ oh wow this is epic
 (This is a comment, if you see this in output. rip)
 
 1 1(Comments ignore the spacing rule thing)+
-so"do"strings
-and[also]lists
-aswell{as}functions
 
-1(I think this should also work)SWAP
+but[not]lists
+or{functions}either
 
-"This is a string"
+"strings dont exist yet"
+
+1(This should work)SWAP
 
 ( To test
  multiline comments
 and line numbering
 later)
 
-"
-multiline
-string
-"
-
 { functionname code }
 
 [ list of things ]
 
-"Another (string)!"
 (A "comment")
                  
 OhNo!ThisTokenIsLongerThan32Characters.
