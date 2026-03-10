@@ -1,12 +1,31 @@
 #include "../include/scanner.h"
 #include <stdio.h>
 
-static inline void TokenListAppend(tokenlist_t* list, token_t token) {
-    list->tokens[list->token_count] = token;
-    list->token_count++;
-    if (list->token_count >= MAX_TOKEN_COUNT) {
-        printf("[ERROR]: TOO MANY TOKENS, WHAT DO I DO????? WTF MAN. YOU ARENT SUPPOSED TO DO THAT!!!!!!\n"); // TODO: Better error handling
+static inline tokenlist_t TokenListInit(unsigned int start_cap) {
+    tokenlist_t list = { 0 };
+    list.capacity = start_cap;
+
+    list.tokens = malloc(sizeof(token_t) * start_cap);
+    if (list.tokens == NULL) {
+        printf("Oopsies, tokenlist couldn't allocate memory :(\n");
         exit(-1);
+    }
+    return list;
+}
+
+static inline void TokenListAppend(tokenlist_t* list, token_t token) {
+    list->tokens[list->length] = token;
+
+    list->length++;
+    if (list->length >= list->capacity) {
+        list->capacity *= 2;
+        token_t* temp = realloc(list->tokens, sizeof(token_t)*list->capacity);
+
+        if (temp == NULL) {
+            printf("My bad gang. tokenlist ran out of memory to use :(\n");
+            exit(-1);
+        }
+        list->tokens = temp;
     }
 }
 
@@ -90,14 +109,13 @@ static inline tokentype_t TokenAssignType(char* source, size_t start, size_t end
 }
 
 tokenlist_t Scan(char* input, size_t length) {
-    tokenlist_t token_list = { 0 };
+    tokenlist_t token_list = TokenListInit(16);
 
     size_t i = 0;
     unsigned int line = 1;
     while (i<length) {
         switch (input[i]) {
             case '\n':
-                EmitToken(input, i, i+1, line, TOKEN_NEWLINE, &token_list);
                 line++;
             case ' ':
             case '\t':
