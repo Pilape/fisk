@@ -7,18 +7,25 @@
 typedef enum {
 
     // Literals
-    TOKEN_NUMBER, TOKEN_STRING,
+    TOKEN_INT, 
     TOKEN_TRUE, TOKEN_FALSE,
         
     // Single char
     TOKEN_PLUS, TOKEN_MINUS, TOKEN_STAR, TOKEN_SLASH, TOKEN_PERCENT, TOKEN_EQUAL,
+
     TOKEN_CURLY_L, TOKEN_CURLY_R, TOKEN_SQUARE_L, TOKEN_SQUARE_R,
 
     // Keywords
+    // Stack manipulation
     TOKEN_SWAP, TOKEN_DROP, TOKEN_DUP,
+
+    // Logic
     TOKEN_NOT, TOKEN_AND, TOKEN_OR,
+
+    // Control flow
     TOKEN_IF, TOKEN_IFELSE, TOKEN_FOR, TOKEN_WHILE,
 
+    // Default
     TOKEN_IDENTIFIER,
 
 } tokentype_t;

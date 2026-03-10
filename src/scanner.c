@@ -73,12 +73,7 @@ static inline tokentype_t TokenAssignType(char* source, size_t start, size_t end
     #define IsKeyword(str) LexemeEquals(source, start, end, str, sizeof(str)-1)
     
     // Number
-    if (IsNumber(source, start, end)) return TOKEN_NUMBER;
-
-    // Stack manipulation
-    else if (IsKeyword("swap")) return TOKEN_SWAP;
-    else if (IsKeyword("dup")) return TOKEN_DUP;
-    else if (IsKeyword("drop")) return TOKEN_DROP;
+    if (IsNumber(source, start, end)) return TOKEN_INT;
 
     // Math
     else if (IsKeyword("+")) return TOKEN_PLUS;
@@ -87,11 +82,22 @@ static inline tokentype_t TokenAssignType(char* source, size_t start, size_t end
     else if (IsKeyword("/")) return TOKEN_SLASH;
     else if (IsKeyword("%")) return TOKEN_PERCENT;
 
+    // Brackets
+    else if (IsKeyword("{")) return TOKEN_CURLY_L;
+    else if (IsKeyword("}")) return TOKEN_CURLY_R;
+    else if (IsKeyword("[")) return TOKEN_SQUARE_L;
+    else if (IsKeyword("]")) return TOKEN_SQUARE_R;
+
     // Logic
     else if (IsKeyword("=")) return TOKEN_EQUAL;
     else if (IsKeyword("or")) return TOKEN_OR;
     else if (IsKeyword("and")) return TOKEN_AND;
     else if (IsKeyword("not")) return TOKEN_NOT;
+
+    // Stack manipulation
+    else if (IsKeyword("swap")) return TOKEN_SWAP;
+    else if (IsKeyword("dup")) return TOKEN_DUP;
+    else if (IsKeyword("drop")) return TOKEN_DROP;
 
     // Control flow
     else if (IsKeyword("if")) return TOKEN_IF;
