@@ -1,8 +1,8 @@
 #ifndef __SCANNER_HEADER__
 #define __SCANNER_HEADER__
 
-#include "../lang.h"
 #include "../include/config.h"
+#include <stdlib.h>
 
 typedef enum {
 
@@ -26,15 +26,15 @@ typedef enum {
 
 typedef struct {
     tokentype_t type;
-    languint_t line, length;
+    unsigned int line, length;
     char* start;
 } token_t;
 
 typedef struct {
-    languint_t token_count;
+    size_t token_count;
     token_t tokens[MAX_TOKEN_COUNT];
 } tokenlist_t;
 
-tokenlist_t Scan(char* input, languint_t length);
+tokenlist_t Scan(char* input, size_t length);
 
 #endif
