@@ -23,7 +23,6 @@ static void EmitToken(char* code, languint_t start, languint_t end, languint_t l
     TokenListAppend(token_list, new_token);
 }
 
-<<<<<<< HEAD
 static inline int IsDigit(char c) {
     if (c >= '0' && '9' >= c) return 1;
     return 0;
@@ -36,10 +35,7 @@ static int IsNumber(char* source, languint_t start, languint_t end) {
     return 1;
 }
 
-static int LexemeEquals(char* source, languint_t start, languint_t end, char* str, languint_t str_length) {
-=======
 static int LexemeEquals(char* source, size_t start, size_t end, char* str, size_t str_length) {
->>>>>>> parent of 27299d5 (Scanner supports bools and numbers)
     int length = end-start;
     if (length != str_length) return 0;
 
