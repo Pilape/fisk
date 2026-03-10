@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/scanner.h"
-
+#include "../lang.h"
 
 char* ReadFile(char* path) {
     FILE* f = fopen(path, "r");
@@ -21,17 +20,17 @@ char* ReadFile(char* path) {
     return NULL;
 }
 
-void LangEval(char* str) {
+void LangEval(char* str, lang_t* ctx) {
     tokenlist_t token_list = Scan(str, strlen(str));
-
-    for (int i=0; i<token_list.length; i++) {
+    GenerateBytecode(token_list, &ctx->vm);
+    /*for (int i=0; i<token_list.length; i++) {
         token_t token = token_list.tokens[i];
         printf("Line: %2d | Type: %2d | ", token.line, token.type);
         for (int j=0; j<token.length; j++) {
             printf("%c", token.start[j]);
         }
         printf("\n");
-    }
+    }*/
 
     free(token_list.tokens);
 }
@@ -43,7 +42,8 @@ int main(int argc, char** argv) {
     }
 
     char* input = ReadFile(argv[1]);
-    LangEval(input);
+    lang_t lang = { 0 };
+    LangEval(input, &lang);
     free(input);
     //printf("%s\n", ReadFile(argv[1])); 
 
