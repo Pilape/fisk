@@ -8,6 +8,7 @@ typedef enum {
 
     // Literals
     TOKEN_NUMBER, TOKEN_STRING,
+    TOKEN_TRUE, TOKEN_FALSE,
         
     // Single char
     TOKEN_PLUS, TOKEN_MINUS, TOKEN_STAR, TOKEN_SLASH, TOKEN_PERCENT, TOKEN_EQUAL,
