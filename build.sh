@@ -1,1 +1,1 @@
-clang -o lang src/*.c -Wall -fsanitize=address -g
+clang -o lang test.c -Wall -fsanitize=address -g -std=c89 -pedantic

@@ -1,0 +1,76 @@
+Big thinking time
+No saving this will be deleted after (Biggest lie of history)
+
+Code:
+{ square ( n -- n ) dup * }
+
+5 square 6 square + 
+
+Steps:
+    square:
+        dup
+        *
+        return
+
+    main:
+        push 5
+        call square
+        push 6
+        call square
+        +
+
+External functions:
+    foo(stack);
+    bar(stack);
+
+Code:
+{ ismod0 ( n n -- b ) % 0 = }
+
+10 ismod0 [ foo ] [ bar ] ifelse
+
+Steps:
+    ismod0:
+        %
+        push 0
+        =
+        return
+
+    main:
+        push 10
+
+        startlist
+            call_extern foo
+        endlist
+
+        startlist
+            call_extern bar
+        endlist
+
+        ifelse
+
+
+Architecture/files
+ ________________________________________
+|                                        |          
+|               == LANG ==               |           _____________________________________________________________________
+|                                        |          |                             == SCANNER ==                           |
+|                                        | <------> | <---- Langtokenlist_t LangScan(char* code, size_t len, ErrHandler); |
+|                                        |          |_____________________________________________________________________|
+|  _____________                         |
+| | Langstate_t |                        |           _________________________________________________________
+| |             |                        |          |                   == ERRORHANDLING ==                   |
+| | ErrHandler  |                        | <------> | <---- void LangReportError(char* message, size_t line); |
+| | Functions   |                        |          |_________________________________________________________|
+| | VM          |                        |
+| |_____________|                        |           ______________________________________________________________________________
+|                                        |          |                                 == CODEGEN ==                                |
+|  _____________                         | <------> | <---- void LangGenerateBytecode(Langtokenlist_t tokens, Langstate_t* state); |
+| | Langvalue_t |                        |          |______________________________________________________________________________|
+| |_____________|                        |
+|                                        |           _________________________________________
+|                                        |          |                 == VM ==                |
+|                                        | <------> | <---- void LangRun(Langstate_t* state); |
+|                                        |          |_________________________________________|
+|                                        |
+|________________________________________|
+
