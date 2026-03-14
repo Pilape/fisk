@@ -1,7 +1,7 @@
-#include "../include/codegen.h"
+#include "../lang.h"
 
-void GenerateBytecode(tokenlist_t token_list, langvm_t* vm) {
-    for (int i=0; i<token_list.length; i++) {
+void Lang_GenerateBytecode(lang_tokenlist_t token_list, lang_vm_t* vm) {
+    {int i; for (i=0; i<token_list.length; i++) {
         switch (token_list.tokens[i].type) {
             case TOKEN_IDENTIFIER:
                 break;
@@ -61,6 +61,5 @@ void GenerateBytecode(tokenlist_t token_list, langvm_t* vm) {
 
 
         }
-    }
-
+    }}
 }

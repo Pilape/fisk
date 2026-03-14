@@ -3,7 +3,7 @@ A simple embeddable concatenative language
 
 ## Features
 - Functions
-- Different types [int, bool, nil, list]
+- Different types [int, bool, nil, quotation]
 
 ## TODO/roadmap
 - Variables
