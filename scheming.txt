@@ -1,76 +1,100 @@
-Big thinking time
-No saving this will be deleted after (Biggest lie of history)
+== FEATURES/PROPERTIES ==
+- Concatenative
+- Embeddable
 
-Code:
-{ square ( n -- n ) dup * }
+== PRIORITIES ==
+1. Simple to implement
+2. Easy/fun to use
 
-5 square 6 square + 
+== WHAT WILL I USE IT FOR? ==
+- Small games
+    - Maybe make a fantasy console for it
+    - The language can be constrained (8 or 16-bit VM)
 
-Steps:
-    square:
-        dup
-        *
-        return
+- Scripting
+    - Little bots in a ASCII game
 
-    main:
-        push 5
-        call square
-        push 6
-        call square
-        +
-
-External functions:
-    foo(stack);
-    bar(stack);
-
-Code:
-{ ismod0 ( n n -- b ) % 0 = }
-
-10 ismod0 [ foo ] [ bar ] ifelse
-
-Steps:
-    ismod0:
-        %
-        push 0
-        =
-        return
-
-    main:
-        push 10
-
-        startlist
-            call_extern foo
-        endlist
-
-        startlist
-            call_extern bar
-        endlist
-
-        ifelse
+- Maybe put it on a microcontroller
+    - The fantasy console
+    - Or just put it there as a flex
 
 
-Architecture/files
- ________________________________________
-|                                        |          
-|               == LANG ==               |           _____________________________________________________________________
-|                                        |          |                             == SCANNER ==                           |
-|                                        | <------> | <---- Langtokenlist_t LangScan(char* code, size_t len, ErrHandler); |
-|                                        |          |_____________________________________________________________________|
-|  _____________                         |
-| | Langstate_t |                        |           _________________________________________________________
-| |             |                        |          |                   == ERRORHANDLING ==                   |
-| | ErrHandler  |                        | <------> | <---- void LangReportError(char* message, size_t line); |
-| | Functions   |                        |          |_________________________________________________________|
-| | VM          |                        |
-| |_____________|                        |           ______________________________________________________________________________
-|                                        |          |                                 == CODEGEN ==                                |
-|  _____________                         | <------> | <---- void LangGenerateBytecode(Langtokenlist_t tokens, Langstate_t* state); |
-| | Langvalue_t |                        |          |______________________________________________________________________________|
-| |_____________|                        |
-|                                        |           _________________________________________
-|                                        |          |                 == VM ==                |
-|                                        | <------> | <---- void LangRun(Langstate_t* state); |
-|                                        |          |_________________________________________|
-|                                        |
-|________________________________________|
+== COMPROMISES ==
+- How do we make sure the language is tiny? What does tiny even mean in this context?
+    - Small library
+        - A few KiB in size
+        - No stdlib
 
+    - Simple language
+        - Few keywords
+        - Simple syntax
+        - Few types
+
+- ANSI C for portability?
+    - No, not worth it
+    - Not that hard to convert later
+
+- Will quotations be lists or atomic?
+    - Atomic
+        - Easier to implement
+        - Less of that dynamic memory management
+
+    - List
+        - Adds a list structure in the process
+        - More versatility
+
+- How will lists work?
+    - Dynamic/automatic
+        - Easier to use
+        - Needs some kind of allocation
+
+    - Static/manual
+        - Easier to implement
+        - Kinda annoying to use
+
+- Anything resembling a struct?
+    - Probably at some point. Idk when or what tho.
+
+
+
+
+== KEEP IT SIMPLE!!!! ==
+Prefixes to determine token type.
+We use the standard library.
+Dynamic arrays.
+
+
+== BYTECODE OR??? ==
+Execute tokens directly?
+    - Is it fast enough?
+Bytecode?
+    - How do we handle quotations?
+Some other representation?
+    - Linked list? (Lisp)
+
+== PREFIXES ==
+# Integer
+' Character
+$ Variable
+@ External function/primitive (With the sole exception of single char primitives)
+No prefix means user-defined function
+
+== BRACKETS ==
+"" String
+[] Quotation/list
+() Comment
+{} Function
+
+== SINGLE CHAR WORDS ==
+Things like '+', '-', etc...
+Are primitives that don't need prefixes.
+
+== EXAMPLE ==
+
+{ ismod0 (i i -- b) % 0 = }
+
+{ fizz? (i -- b) 3 ismod0 [ "fizz" print true ] [ false ] ifelse }
+{ buzz? (i --b)  5 ismod0 ["buzz" print true ] [ false ] ifelse }
+{ fizzbuzz (i -- ) dup dup fizz? swap buzz? or not [ print ] if }
+
+1 100 range [ fizzbuzz ] map
