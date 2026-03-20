@@ -34,7 +34,7 @@ do {                                                                            
         (list).capacity *= 2;                                                           \
         (list).items = realloc((list).items, (list).capacity*sizeof((list).items[0]));  \
     }                                                                                   \
-    (list).items[(list).count] = item;                                                  \
+    (list).items[(list).count] = (item);                                                  \
     (list).count++;                                                                     \
 } while(0)                                                                              \
 

@@ -40,6 +40,48 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
     _lang_tokenlist_t tokens = { 0 };
     LIST_INIT(tokens, 32);
 
+    size_t line = 1;
+    size_t start = 0;
+    size_t current = 0;
+
+    while (current < str_length) {
+
+        switch (str[current]) {
+            case '\n':
+                line++;
+            case ' ':
+            case '\t':
+                break;
+
+            case '(':
+                while (current++ < str_length) {
+                    if (str[current] == '\n') line++;
+                    if (str[current] == ')') break;
+                }
+                break;
+
+            default: {
+                while (current++ < str_length) {
+                    if (str[current] == '\n') { line++; break; }
+                    if (str[current] == ' ' || str[current] == '\t') break;
+                }
+                _lang_token_t token = {
+                    .type = 0,
+                    .lex_start = start,
+                    .lex_length = current-start,
+                    .line = line,
+                };
+                LIST_APPEND(tokens, token);
+                break;
+            }
+                
+        }
+
+
+        current++;
+        start = current;
+    }
+
     return tokens;
 }
 /* =============== CODEGEN =============== */
@@ -56,13 +98,13 @@ void Lang_Eval(char* str) {
     for (int i=0; i<tokens.count; i++) {
         _lang_token_t token = tokens.items[i];
         // General info
-        printf("[%d]: { line=%zu, type=%d, ", i, token.line, token.type);
+        printf("[%d]: { line=%zu, type=%d, '", i, token.line, token.type);
         // Lexeme
         for (int j=token.lex_start; j<token.lex_start+token.lex_length; j++) {
             printf("%c", str[j]);
         }
         // Close the brackets
-        printf(" }\n");
+        printf("' }\n");
     }
 
     LIST_FREE(tokens);
