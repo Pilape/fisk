@@ -51,6 +51,7 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
                 line++;
             case ' ':
             case '\t':
+                current++;
                 break;
 
             case '(':
@@ -58,12 +59,12 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
                     if (str[current] == '\n') line++;
                     if (str[current] == ')') break;
                 }
+                current++; // Skip final ')'
                 break;
 
             default: {
                 while (current++ < str_length) {
-                    if (str[current] == '\n') { line++; break; }
-                    if (str[current] == ' ' || str[current] == '\t') break;
+                    if (str[current] == '\n' || str[current] == ' ' || str[current] == '\t') break;
                 }
                 _lang_token_t token = {
                     .type = 0,
@@ -78,7 +79,6 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
         }
 
 
-        current++;
         start = current;
     }
 

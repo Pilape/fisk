@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define __LANG_IMPLEMENTATION__
+#include "../lang.h"
+
+#include "lib/CuTest.h"
+
+char* ReadFile(char* path) {
+    FILE* fp = fopen(path, "r");
+
+    fseek(fp, 0, SEEK_END);
+    size_t file_size = ftell(fp);
+    rewind(fp);
+
+    char* buffer = malloc(file_size+1);
+    fread(buffer, file_size, 1, fp);
+    buffer[file_size] = '\0';
+
+    fclose(fp);
+
+    return buffer;
+}
+
+int TokenCompareStr(_lang_token_t token, char* expected, char* file) {
+    if (token.lex_length != strlen(expected)) return 0;
+
+    for (int i=0; i<token.lex_length; i++) {
+        if (file[i+token.lex_start] != expected[i]) return 0;
+    }
+
+    return 1;
+}
+
+typedef struct {
+    _lang_tokentype_t type;
+    size_t line;
+
+    char* lexeme;
+} test_token_t;
+
+void TestScanner(CuTest* tc) {
+    char* input = ReadFile("files/scanner_test.txt");
+    _lang_tokenlist_t result = _Lang_Scan(input, strlen(input));
+
+    test_token_t expected[] = {
+        {.type = 0, .line = 1, .lexeme = "{"},
+        {.type = 0, .line = 1, .lexeme = "square"},
+        {.type = 0, .line = 1, .lexeme = "@dup"},
+        {.type = 0, .line = 1, .lexeme = "*"},
+        {.type = 0, .line = 1, .lexeme = "}"},
+
+        {.type = 0, .line = 3, .lexeme = "#5"},
+        {.type = 0, .line = 3, .lexeme = "square"},
+        {.type = 0, .line = 3, .lexeme = "print"},
+
+        {.type = 0, .line = 6, .lexeme = "#25"},
+        {.type = 0, .line = 6, .lexeme = "square"},
+        {.type = 0, .line = 6, .lexeme = "print"},
+    };
+
+    CuAssertIntEquals(tc, sizeof(expected)/sizeof(expected[0]), result.count);
+    for (int i=0; i<result.count; i++) {
+        CuAssertIntEquals(tc, expected[i].line, result.items[i].line);
+        CuAssertIntEquals(tc, expected[i].type, result.items[i].type);
+
+        CuAssertTrue(tc, TokenCompareStr(result.items[i], expected[i].lexeme, input));
+    }
+
+    LIST_FREE(result);
+    free(input);
+
+}
+
+CuSuite* ScannerGetSuite() {
+    CuSuite* suite = CuSuiteNew();
+    SUITE_ADD_TEST(suite, TestScanner);
+    return suite;
+}

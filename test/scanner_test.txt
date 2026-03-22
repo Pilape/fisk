@@ -1,0 +1,6 @@
+{ square (i -- i*i)@dup * }
+
+#5 square print (Multiline 
+comment 
+yay)
+#25 square print
