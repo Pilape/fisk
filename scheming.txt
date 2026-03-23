@@ -78,6 +78,13 @@ Some other representation?
 $ Variable
 @ External function/primitive (With the sole exception of single char primitives)
 No prefix means user-defined function
+Maybe not neccessary.
+Simplifies scanner.
+
+-- Prefixes take 2 --
+# Integer
+$ Variable
+@ Function definition
 
 == BRACKETS ==
 "" String
@@ -85,12 +92,20 @@ No prefix means user-defined function
 () Comment
 {} Function
 
+-- Brackets take 2 --
+"" String
+[] Quotation/list
+() Comment
+
 == SINGLE CHAR WORDS ==
 Things like '+', '-', etc...
 Are primitives that don't need prefixes.
 
-== EXAMPLE ==
+Maybe use ';' for function end?
 
+== IDEAS ==
+
+-- a --
 { ismod0 (i i -- b) % 0 = }
 
 { fizz? (i -- b) 3 ismod0 [ "fizz" print true ] [ false ] ifelse }
@@ -98,3 +113,9 @@ Are primitives that don't need prefixes.
 { fizzbuzz (i -- ) dup dup fizz? swap buzz? or not [ print ] if }
 
 1 100 range [ fizzbuzz ] map
+
+-- b --
+@ismod0 (i i -- i) % 0 = ;
+@fizz? (i -- i) #3 ismod0 ["fizz" print 1] [0] ifelse ;
+@fbuzz? (i -- i) #5 ismod0 ["buzz" print 1] [0] ifelse;
+@fizzbuzz (i -- ) dup dup fizz? swap buzz? or not [print] if ;
