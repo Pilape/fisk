@@ -50,6 +50,11 @@ static inline void _Lang_EmitToken(_lang_tokenlist_t* tokens, size_t line, size_
     LIST_APPEND(*tokens, token);
 }
 
+static inline int _Lang_IsDigit(char c) {
+    if (c <'0' || c > '9') return 0;
+    return 1;
+}
+
 _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
     _lang_tokenlist_t tokens = { 0 };
     LIST_INIT(tokens, 32);
@@ -87,6 +92,13 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
                 line = new_line;
                 break;
             }
+
+            case '#':
+                while (current++ < str_length) {
+                    if (!_Lang_IsDigit(str[current])) break;
+                }
+                _Lang_EmitToken(&tokens, line, start, current, _LANG_TOKEN_INT);
+                break;
 
             case '{': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_CURLY_L); break;
             case '}': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_CURLY_R); break;
