@@ -14,8 +14,13 @@ Line numbers)
 
 (Brackets)
 {function} { function }{function }{ function}
-[ quotation ] [quotation][quotation ][ quotation]
+[ quotation ] [quotation][quotation ][ quotation]
 " string " "string""string "" string"
 
 
 #1(comment)#5"string"+[quotation]#2{function}/
+
+"Multiline
+string"
+
+Yippee

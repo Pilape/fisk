@@ -36,6 +36,16 @@ typedef struct {
     size_t capacity;
 } _lang_tokenlist_t;
 
+static inline void _Lang_EmitToken(_lang_tokenlist_t* tokens, size_t line, size_t start, size_t current, _lang_tokentype_t type) {
+    _lang_token_t token = {
+        .type = type,
+        .lex_start = start,
+        .lex_length = current-start,
+        .line = line,
+    };
+    LIST_APPEND(*tokens, token);
+}
+
 _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
     _lang_tokenlist_t tokens = { 0 };
     LIST_INIT(tokens, 32);
@@ -62,17 +72,46 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
                 current++; // Skip final ')'
                 break;
 
+            case '"': {
+                size_t new_line = line; // Multiline string tokens have their line numbers as the line they start in.
+                while (current++ < str_length) {
+                    if (str[current] == '\n') new_line++;
+                    if (str[current] == '"') break;
+                }
+                current++;
+                _Lang_EmitToken(&tokens, line, start, current, 0);
+                line = new_line;
+                break;
+            }
+
+            case '{': _Lang_EmitToken(&tokens, line, start, ++current, 0); break;
+            case '}': _Lang_EmitToken(&tokens, line, start, ++current, 0); break;
+
+            case '[': _Lang_EmitToken(&tokens, line, start, ++current, 0); break;
+            case ']': _Lang_EmitToken(&tokens, line, start, ++current, 0); break;
+
             default: {
                 while (current++ < str_length) {
-                    if (str[current] == '\n' || str[current] == ' ' || str[current] == '\t') break;
+                    switch (str[current]) {
+                        case '\n': 
+                        case ' ': 
+                        case '\t': 
+                        case '(':
+                        case '{': 
+                        case '}': 
+                        case '[': 
+                        case ']':
+                        case '"':
+                            // Evil goto of doom
+                            goto _lang_goto_scanner_escape;
+                            break;
+
+                        default: 
+                            break;
+                    }
                 }
-                _lang_token_t token = {
-                    .type = 0,
-                    .lex_start = start,
-                    .lex_length = current-start,
-                    .line = line,
-                };
-                LIST_APPEND(tokens, token);
+                _lang_goto_scanner_escape:
+                _Lang_EmitToken(&tokens, line, start, current, 0);
                 break;
             }
                 
