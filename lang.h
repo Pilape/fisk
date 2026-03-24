@@ -15,11 +15,15 @@ void Lang_Eval(char* str);
 
 /* =============== SCANNER =============== */
 typedef enum {
-    TOKEN_IDENTIFIER,
-    TOKEN_INT,
-    TOKEN_STRING,
-    TOKEN_QUOTATION,
-    TOKEN_FUNCTION,
+    _LANG_TOKEN_SYMBOL,
+    _LANG_TOKEN_INT,
+    _LANG_TOKEN_STRING,
+
+    _LANG_TOKEN_SQUARE_L,
+    _LANG_TOKEN_SQUARE_R,
+
+    _LANG_TOKEN_CURLY_L,
+    _LANG_TOKEN_CURLY_R,
 } _lang_tokentype_t;
 
 typedef struct {
@@ -79,16 +83,16 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
                     if (str[current] == '"') break;
                 }
                 current++;
-                _Lang_EmitToken(&tokens, line, start, current, 0);
+                _Lang_EmitToken(&tokens, line, start, current, _LANG_TOKEN_STRING);
                 line = new_line;
                 break;
             }
 
-            case '{': _Lang_EmitToken(&tokens, line, start, ++current, 0); break;
-            case '}': _Lang_EmitToken(&tokens, line, start, ++current, 0); break;
+            case '{': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_CURLY_L); break;
+            case '}': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_CURLY_R); break;
 
-            case '[': _Lang_EmitToken(&tokens, line, start, ++current, 0); break;
-            case ']': _Lang_EmitToken(&tokens, line, start, ++current, 0); break;
+            case '[': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_SQUARE_L); break;
+            case ']': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_SQUARE_R); break;
 
             default: {
                 while (current++ < str_length) {
@@ -111,7 +115,7 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
                     }
                 }
                 _lang_goto_scanner_escape:
-                _Lang_EmitToken(&tokens, line, start, current, 0);
+                _Lang_EmitToken(&tokens, line, start, current, _LANG_TOKEN_SYMBOL);
                 break;
             }
                 
