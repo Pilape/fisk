@@ -6,7 +6,11 @@
 #include <stdio.h>
 #include "list.h"
 
-void Lang_Eval(char* str);
+typedef struct {
+    
+} lang_ctx_t;
+
+void Lang_Eval(char* str, lang_ctx_t* ctx);
 
 #endif
 
@@ -146,7 +150,7 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
 /* =============== RUNTIME =============== */
 
 /* =============== GENERAL =============== */
-void Lang_Eval(char* str) {
+void Lang_Eval(char* str, lang_ctx_t* ctx) {
     _lang_tokenlist_t tokens = _Lang_Scan(str, strlen(str));
 
     // Print token list
