@@ -1,118 +1,205 @@
-#ifndef __LANG_HEADER__
-#define __LANG_HEADER__
+#ifndef LANG_HEADER
+#define LANG_HEADER
+////////////////CONFIG////////////////
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include "list.h"
-
-typedef struct {
+    ////////MEMORY/////////
     
-} lang_ctx_t;
+    // The language does not use dynamic memory management.
+    // Therefore, the memory used is decided at compile time.
 
-void Lang_Eval(char* str, lang_ctx_t* ctx);
+    // The size of the data stack.
+    #ifndef LANG_STACK_SIZE
+        #define LANG_STACK_SIZE 256
+    #endif
 
-#endif
+    // How many values/nodes are available.
+    // Basically how big the languages memory arena is.
+    #ifndef LANG_NODE_COUNT 
+    #define LANG_NODE_COUNT 0x4000
+    #endif
 
-#ifdef __LANG_IMPLEMENTATION__
-#undef __LANG_IMPLEMENTATION__
+    // How many primitives the language can have, also used by "built in" primitives and the standard library.
+    #ifndef LANG_PRIMITIVE_LIMIT
+    #define LANG_PRIMITIVE_LIMIT 256
+    #endif
 
-/* =============== SCANNER =============== */
-typedef enum {
-    _LANG_TOKEN_SYMBOL,
-    _LANG_TOKEN_INT,
-    _LANG_TOKEN_STRING,
+    // How many functions and variables the language can have.
+    #ifndef LANG_SYMBOL_LIMIT
+    #define LANG_SYMBOL_LIMIT 512
+    #endif
 
-    _LANG_TOKEN_SQUARE_L,
-    _LANG_TOKEN_SQUARE_R,
+    // The max length of variable, function and primitive names
+    #ifndef LANG_SYMBOL_LENGTH
+    #define LANG_SYMBOL_LENGTH 32
+    #endif
 
-    _LANG_TOKEN_CURLY_L,
-    _LANG_TOKEN_CURLY_R,
-} _lang_tokentype_t;
+    ///////////////////////
+    
+//////////////////////////////////////
 
-typedef struct {
-    _lang_tokentype_t type;
-    size_t line;
+#define LANG_NULL ((void*)0)
+#define LANG_TRUE 1
+#define LANG_FALSE 0
 
-    size_t lex_start;
-    size_t lex_length;
-} _lang_token_t;
+#define LANG_ERROR_SIZE 512 // Size of error message buffer
 
-typedef struct {
-    _lang_token_t* items;
-    size_t count;
-    size_t capacity;
-} _lang_tokenlist_t;
+////////////////STRUCTS/////////////////
 
-static inline void _Lang_EmitToken(_lang_tokenlist_t* tokens, size_t line, size_t start, size_t current, _lang_tokentype_t type) {
-    _lang_token_t token = {
-        .type = type,
-        .lex_start = start,
-        .lex_length = current-start,
-        .line = line,
-    };
-    LIST_APPEND(*tokens, token);
+struct lang_ctx;
+
+enum lang_type {
+    LANG_INT,
+    LANG_CHAR,
+    LANG_QUOT,
+    LANG_PRIM,
+};
+
+struct lang_node;
+
+struct lang_item {
+    enum lang_type type;
+    union {
+        int integer;
+        char character;
+        struct lang_node* quotation;
+        void (*primitive)(struct lang_ctx* ctx);
+    } value;
+};
+
+struct lang_node {
+    struct lang_item item;
+    char allocated; 
+
+    struct lang_node* next;
+};
+
+struct lang_primitive {
+    char name[LANG_SYMBOL_LENGTH];
+    void (*c_func)(struct lang_ctx* ctx);
+};
+
+struct lang_symbol {
+    char name[LANG_SYMBOL_LENGTH];
+    struct lang_node* value;
+};
+
+struct lang_ctx {
+    struct lang_node nodes[LANG_NODE_COUNT];
+
+    struct lang_item stack[LANG_STACK_SIZE];
+    int stack_ptr;
+
+    struct lang_primitive primitives[LANG_PRIMITIVE_LIMIT];
+    int primitive_count;
+
+    struct lang_symbol symbols[LANG_SYMBOL_LIMIT];
+    int symbol_count;
+};
+
+////////////////////////////////////////
+
+struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx);
+
+#endif // LANG_HEADER
+#ifdef LANG_IMPLEMENTATION
+#undef LANG_IMPLEMENTATION
+
+struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx) {
+    for (unsigned int i=0; i<LANG_NODE_COUNT; i++) {
+        if (ctx->nodes[i].allocated == LANG_FALSE) {
+            ctx->nodes[i].allocated = LANG_TRUE;
+            return &(ctx->nodes[i]);
+        } 
+    }
+    return LANG_NULL;
 }
 
-static inline int _Lang_IsDigit(char c) {
+//////// NUMBER ////////
+
+char Lang_IsDigit(char c) {
     if (c <'0' || c > '9') return 0;
     return 1;
 }
 
-_lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
-    _lang_tokenlist_t tokens = { 0 };
-    LIST_INIT(tokens, 32);
+////////////////////////
 
-    size_t line = 1;
-    size_t start = 0;
-    size_t current = 0;
+/////// SCANNER ///////
 
-    while (current < str_length) {
+enum lang_token_type {
+    LANG_TOKEN_INT,
+    LANG_TOKEN_STR,
+    LANG_TOKEN_SYMBOL,
 
-        switch (str[current]) {
+    LANG_TOKEN_CURLY_L,
+    LANG_TOKEN_CURLY_R,
+
+    LANG_TOKEN_SQUARE_L,
+    LANG_TOKEN_SQUARE_R,
+
+    LANG_TOKEN_NONE,
+};
+
+struct lang_token {
+    enum lang_token_type type;
+    unsigned int start, length, line;
+};
+
+struct lang_scanner {
+    unsigned int start, current, line, input_len;
+    char* input;
+};
+
+#define LANG_TOKEN(token_type) ((struct lang_token){.type=(token_type), .line=scanner->line, .start=scanner->start, .length=scanner->current-scanner->start})
+
+struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) {
+    scanner->start = scanner->current;
+
+    while (scanner->current < scanner->input_len) {
+
+        switch (scanner->input[scanner->current]) {
             case '\n':
-                line++;
+                scanner->line++;
             case ' ':
             case '\t':
-                current++;
+                scanner->current++;
                 break;
 
             case '(':
-                while (current++ < str_length) {
-                    if (str[current] == '\n') line++;
-                    if (str[current] == ')') break;
+                while (scanner->current++ < scanner->input_len) {
+                    if (scanner->input[scanner->current] == '\n') scanner->line++;
+                    if (scanner->input[scanner->current] == ')') break;
                 }
-                current++; // Skip final ')'
+                scanner->current++; // Skip final ')'
                 break;
 
             case '"': {
-                size_t new_line = line; // Multiline string tokens have their line numbers as the line they start in.
-                while (current++ < str_length) {
-                    if (str[current] == '\n') new_line++;
-                    if (str[current] == '"') break;
+                unsigned int new_line = scanner->line; // Multiline string tokens have their line numbers as the line they start in.
+                while (scanner->current++ < scanner->input_len) {
+                    if (scanner->input[scanner->current] == '\n') new_line++;
+                    if (scanner->input[scanner->current] == '"') break;
                 }
-                current++;
-                _Lang_EmitToken(&tokens, line, start, current, _LANG_TOKEN_STRING);
-                line = new_line;
+                scanner->current++;
+                return LANG_TOKEN(LANG_TOKEN_STR);
+                scanner->line = new_line;
                 break;
             }
 
             case '#':
-                while (current++ < str_length) {
-                    if (!_Lang_IsDigit(str[current])) break;
+                while (scanner->current++ < scanner->input_len) {
+                    if (!Lang_IsDigit(scanner->input[scanner->current])) break;
                 }
-                _Lang_EmitToken(&tokens, line, start, current, _LANG_TOKEN_INT);
+                return LANG_TOKEN(LANG_TOKEN_INT);
                 break;
 
-            case '{': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_CURLY_L); break;
-            case '}': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_CURLY_R); break;
+            case '{': return LANG_TOKEN(LANG_TOKEN_CURLY_L); break;
+            case '}': return LANG_TOKEN(LANG_TOKEN_CURLY_R); break;
 
-            case '[': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_SQUARE_L); break;
-            case ']': _Lang_EmitToken(&tokens, line, start, ++current, _LANG_TOKEN_SQUARE_R); break;
+            case '[': return LANG_TOKEN(LANG_TOKEN_SQUARE_L); break;
+            case ']': return LANG_TOKEN(LANG_TOKEN_SQUARE_R); break;
 
             default: {
-                while (current++ < str_length) {
-                    switch (str[current]) {
+                while (scanner->current++ < scanner->input_len) {
+                    switch (scanner->input[scanner->current]) {
                         case '\n': 
                         case ' ': 
                         case '\t': 
@@ -131,42 +218,27 @@ _lang_tokenlist_t _Lang_Scan(char* str, size_t str_length) {
                     }
                 }
                 _lang_goto_scanner_escape:
-                _Lang_EmitToken(&tokens, line, start, current, _LANG_TOKEN_SYMBOL);
+                return LANG_TOKEN(LANG_TOKEN_SYMBOL);
                 break;
             }
                 
         }
-
-
-        start = current;
     }
 
-    return tokens;
+    return LANG_TOKEN(LANG_TOKEN_NONE);
 }
-/* =============== CODEGEN =============== */
+#undef LANG_TOKEN
 
 
 
-/* =============== RUNTIME =============== */
+///////////////////////
 
-/* =============== GENERAL =============== */
-void Lang_Eval(char* str, lang_ctx_t* ctx) {
-    _lang_tokenlist_t tokens = _Lang_Scan(str, strlen(str));
 
-    // Print token list
-    for (int i=0; i<tokens.count; i++) {
-        _lang_token_t token = tokens.items[i];
-        // General info
-        printf("[%d]: { line=%zu, type=%d, '", i, token.line, token.type);
-        // Lexeme
-        for (int j=token.lex_start; j<token.lex_start+token.lex_length; j++) {
-            printf("%c", str[j]);
-        }
-        // Close the brackets
-        printf("' }\n");
-    }
+////// CODEGEN ///////
 
-    LIST_FREE(tokens);
-}
 
-#endif
+
+//////////////////////
+
+
+#endif // LANG_IMPLEMENTATION

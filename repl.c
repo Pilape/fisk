@@ -1,29 +1,41 @@
-#include <stdio.h>
-#define __LANG_IMPLEMENTATION__
+#define LANG_IMPLEMENTATION
+#define LANG_NODE_COUNT 32
 #include "lang.h"
+#include <stdio.h>
 
-int main(int argc, char* argv[]) {
-    lang_ctx_t lang = {  };
 
-    printf("/$$                                           /$$$$$$$  /$$$$$$$$ /$$$$$$$  /$$      \n"
-           "| $$                                          | $$__  $$| $$_____/| $$__  $$| $$      \n"
-           "| $$        /$$$$$$  /$$$$$$$   /$$$$$$       | $$  \\ $$| $$      | $$  \\ $$| $$      \n"
-           "| $$       |____  $$| $$__  $$ /$$__  $$      | $$$$$$$/| $$$$$   | $$$$$$$/| $$      \n"
-           "| $$        /$$$$$$$| $$  \\ $$| $$  \\ $$      | $$__  $$| $$__/   | $$____/ | $$      \n"
-           "| $$       /$$__  $$| $$  | $$| $$  | $$      | $$  \\ $$| $$      | $$      | $$      \n"
-           "| $$$$$$$$|  $$$$$$$| $$  | $$|  $$$$$$$      | $$  | $$| $$$$$$$$| $$      | $$$$$$$$\n"
-           "|________/ \\_______/|__/  |__/ \\____  $$      |__/  |__/|________/|__/      |________/\n"
-           "                               /$$  \\ $$                                              \n"
-           "                              |  $$$$$$/                                              \n"
-           "                               \\______/                                               \n\n\n");
+int main() {
+    struct lang_ctx lang = { 0 };
+
+    puts("Lang repl");
+    puts("ctrl+c to exit");
 
     while (1) {
-        printf("> ");
-        char input[256];
-        fgets(input, sizeof(input), stdin);
-        Lang_Eval(input, &lang);
+        fputs("$ ", stdout);
+        
+        char buf[256];
+        fgets(buf, sizeof(buf), stdin);
+        
+        struct lang_scanner scanner = {
+            .line = 1,
+            .start = 0,
+            .current = 0,
+            .input_len = sizeof(buf),
+            .input = buf,
+        };
 
-        printf("ok\n");
+        while (1) {
+            struct lang_token token = Lang_Scan(&scanner, &lang);
+            if (token.type == LANG_TOKEN_NONE) break;
+
+            printf("Token: { line = %d, length = %d, type = %d, lexeme = '", token.line, token.length, token.type);
+            for (unsigned int i=token.start; i<token.start+token.length; i++) {
+                putc(scanner.input[i], stdin);
+            }
+            printf("' }\n");
+        }
+
+        puts("ok");
     }
 
     return 0;
