@@ -30,7 +30,7 @@ int main() {
 
             printf("Token: { line = %d, length = %d, type = %d, lexeme = '", token.line, token.length, token.type);
             for (unsigned int i=token.start; i<token.start+token.length; i++) {
-                putc(scanner.input[i], stdin);
+                putc(scanner.input[i], stdout);
             }
             printf("' }\n");
         }

@@ -152,10 +152,8 @@ struct lang_scanner {
 #define LANG_TOKEN(token_type) ((struct lang_token){.type=(token_type), .line=scanner->line, .start=scanner->start, .length=scanner->current-scanner->start})
 
 struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) {
-    scanner->start = scanner->current;
-
-    while (scanner->current < scanner->input_len) {
-
+    while (1) {
+        scanner->start = scanner->current;
         switch (scanner->input[scanner->current]) {
             case '\n':
                 scanner->line++;
@@ -164,65 +162,21 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                 scanner->current++;
                 break;
 
-            case '(':
-                while (scanner->current++ < scanner->input_len) {
-                    if (scanner->input[scanner->current] == '\n') scanner->line++;
-                    if (scanner->input[scanner->current] == ')') break;
-                }
-                scanner->current++; // Skip final ')'
-                break;
-
-            case '"': {
-                unsigned int new_line = scanner->line; // Multiline string tokens have their line numbers as the line they start in.
-                while (scanner->current++ < scanner->input_len) {
-                    if (scanner->input[scanner->current] == '\n') new_line++;
-                    if (scanner->input[scanner->current] == '"') break;
-                }
-                scanner->current++;
-                return LANG_TOKEN(LANG_TOKEN_STR);
-                scanner->line = new_line;
-                break;
-            }
-
-            case '#':
-                while (scanner->current++ < scanner->input_len) {
-                    if (!Lang_IsDigit(scanner->input[scanner->current])) break;
-                }
-                return LANG_TOKEN(LANG_TOKEN_INT);
-                break;
-
-            case '{': return LANG_TOKEN(LANG_TOKEN_CURLY_L); break;
-            case '}': return LANG_TOKEN(LANG_TOKEN_CURLY_R); break;
-
-            case '[': return LANG_TOKEN(LANG_TOKEN_SQUARE_L); break;
-            case ']': return LANG_TOKEN(LANG_TOKEN_SQUARE_R); break;
-
-            default: {
+            default:
                 while (scanner->current++ < scanner->input_len) {
                     switch (scanner->input[scanner->current]) {
-                        case '\n': 
-                        case ' ': 
-                        case '\t': 
-                        case '(':
-                        case '{': 
-                        case '}': 
-                        case '[': 
-                        case ']':
-                        case '"':
-                            // Evil goto of doom
-                            goto _lang_goto_scanner_escape;
-                            break;
-
-                        default: 
+                        case '\n':
+                        case ' ':
+                        case '\t':
+                            goto __lang_scanner_goto_escape__;
                             break;
                     }
                 }
-                _lang_goto_scanner_escape:
-                return LANG_TOKEN(LANG_TOKEN_SYMBOL);
+                __lang_scanner_goto_escape__:
+                    return LANG_TOKEN(LANG_TOKEN_SYMBOL);
                 break;
-            }
-                
         }
+
     }
 
     return LANG_TOKEN(LANG_TOKEN_NONE);
