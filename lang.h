@@ -154,6 +154,10 @@ struct lang_scanner {
 struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) {
     while (1) {
         scanner->start = scanner->current;
+        if (scanner->current >= scanner->input_len) {
+            return LANG_TOKEN(LANG_TOKEN_NONE);
+        }
+
         switch (scanner->input[scanner->current]) {
             case '\n':
                 scanner->line++;
@@ -162,25 +166,25 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                 scanner->current++;
                 break;
 
-            default:
+
+            default: 
                 while (scanner->current++ < scanner->input_len) {
                     switch (scanner->input[scanner->current]) {
-                        case '\n':
                         case ' ':
+                        case '\n':
                         case '\t':
-                            goto __lang_scanner_goto_escape__;
+                            goto __lang_scanner_goto_escape__; // Evil goto of doom
                             break;
                     }
                 }
+
                 __lang_scanner_goto_escape__:
                     return LANG_TOKEN(LANG_TOKEN_SYMBOL);
-                break;
+            break;
         }
-
     }
-
-    return LANG_TOKEN(LANG_TOKEN_NONE);
 }
+
 #undef LANG_TOKEN
 
 

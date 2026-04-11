@@ -2,6 +2,7 @@
 #define LANG_NODE_COUNT 32
 #include "lang.h"
 #include <stdio.h>
+#include <string.h>
 
 
 int main() {
@@ -20,7 +21,7 @@ int main() {
             .line = 1,
             .start = 0,
             .current = 0,
-            .input_len = sizeof(buf),
+            .input_len = strlen(buf),
             .input = buf,
         };
 
