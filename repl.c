@@ -11,6 +11,8 @@ int main() {
     puts("Lang repl");
     puts("ctrl+c to exit");
 
+    unsigned int line = 1;
+
     while (1) {
         fputs("$ ", stdout);
         
@@ -18,7 +20,7 @@ int main() {
         fgets(buf, sizeof(buf), stdin);
         
         struct lang_scanner scanner = {
-            .line = 1,
+            .line = line,
             .start = 0,
             .current = 0,
             .input_len = strlen(buf),
@@ -35,6 +37,8 @@ int main() {
             }
             printf("' }\n");
         }
+
+        line = scanner.line;
 
         puts("ok");
     }
