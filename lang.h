@@ -166,8 +166,9 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                 scanner->current++;
                 break;
 
+            default: {
+                enum lang_token_type symbol_type = (scanner->input[scanner->current] == '-' || Lang_IsDigit(scanner->input[scanner->current])) ? LANG_TOKEN_INT : LANG_TOKEN_SYMBOL;
 
-            default: 
                 while (scanner->current++ < scanner->input_len) {
                     switch (scanner->input[scanner->current]) {
                         case ' ':
@@ -176,11 +177,14 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                             goto __lang_scanner_goto_escape__; // Evil goto of doom
                             break;
                     }
+                    if (!Lang_IsDigit(scanner->input[scanner->current])) symbol_type = LANG_TOKEN_SYMBOL;
                 }
 
                 __lang_scanner_goto_escape__:
-                    return LANG_TOKEN(LANG_TOKEN_SYMBOL);
-            break;
+                    if (scanner->current-scanner->start == 1 && scanner->input[scanner->start] == '-') symbol_type = LANG_TOKEN_SYMBOL; // '-' is not a number (crazy, i know)
+                    return LANG_TOKEN(symbol_type);
+                break;
+            }
         }
     }
 }
