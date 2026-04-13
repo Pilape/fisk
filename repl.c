@@ -37,6 +37,10 @@ int main() {
             }
             printf("' }\n");
         }
+        if (lang.state == LANG_ERROR) {
+            puts(lang.error_msg);
+            return 1;
+        }
 
         line = scanner.line;
 

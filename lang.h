@@ -194,6 +194,19 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                 scanner->current++;
                 break;
 
+            case '(':
+                while (scanner->current++ < scanner->input_len) {
+                    if (scanner->input[scanner->current] == ')') {
+                        scanner->current++; // Consume ')'
+                        break;
+                    }
+                }
+                if (scanner->current >= scanner->input_len) {
+                    Lang_Error("[ERROR]: Eternal comment of doom", ctx);
+                    return LANG_TOKEN(LANG_TOKEN_NONE);
+                }
+                break;
+
             case '{':
                 scanner->current++;
                 return LANG_TOKEN(LANG_TOKEN_CURLY_L);
@@ -213,6 +226,7 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                         case '\t':
                         case '{':
                         case '}':
+                        case '(':
                             goto __lang_scanner_goto_escape__; // Evil goto of doom
                             break;
                     }
