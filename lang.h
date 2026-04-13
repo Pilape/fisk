@@ -83,6 +83,11 @@ struct lang_symbol {
     struct lang_node* value;
 };
 
+enum lang_state {
+    LANG_OK,
+    LANG_ERROR,
+};
+
 struct lang_ctx {
     struct lang_node nodes[LANG_NODE_COUNT];
 
@@ -94,11 +99,20 @@ struct lang_ctx {
 
     struct lang_symbol symbols[LANG_SYMBOL_LIMIT];
     int symbol_count;
+
+    char error_msg[LANG_ERROR_SIZE+1]; // +1 for '\0'
+    enum lang_state state;
+};
+
+struct lang_scanner {
+    unsigned int start, current, line, input_len;
+    char* input;
 };
 
 ////////////////////////////////////////
 
 struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx);
+struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx);
 
 #endif // LANG_HEADER
 #ifdef LANG_IMPLEMENTATION
@@ -125,6 +139,28 @@ char Lang_IsDigit(char c) {
 
 /////// SCANNER ///////
 
+unsigned int Lang_Strlen(char* str) {
+    unsigned int len = 0;
+    while (str[len] != '\0') {
+        len++;
+    }
+
+    return len;
+}
+
+void Lang_Error(char* msg, struct lang_ctx* ctx) {
+    ctx->state = LANG_ERROR;
+    
+    int str_len = Lang_Strlen(msg);
+    if (str_len > LANG_ERROR_SIZE) str_len = LANG_ERROR_SIZE;
+
+    for (int i=0; i<str_len; i++) {
+        ctx->error_msg[i] = msg[i];
+    }
+
+    ctx->error_msg[str_len] = '\0';
+}
+
 enum lang_token_type {
     LANG_TOKEN_INT,
     LANG_TOKEN_STR,
@@ -133,20 +169,12 @@ enum lang_token_type {
     LANG_TOKEN_CURLY_L,
     LANG_TOKEN_CURLY_R,
 
-    LANG_TOKEN_SQUARE_L,
-    LANG_TOKEN_SQUARE_R,
-
     LANG_TOKEN_NONE,
 };
 
 struct lang_token {
     enum lang_token_type type;
     unsigned int start, length, line;
-};
-
-struct lang_scanner {
-    unsigned int start, current, line, input_len;
-    char* input;
 };
 
 #define LANG_TOKEN(token_type) ((struct lang_token){.type=(token_type), .line=scanner->line, .start=scanner->start, .length=scanner->current-scanner->start})
@@ -166,6 +194,15 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                 scanner->current++;
                 break;
 
+            case '{':
+                scanner->current++;
+                return LANG_TOKEN(LANG_TOKEN_CURLY_L);
+                break;
+            case '}':
+                scanner->current++;
+                return LANG_TOKEN(LANG_TOKEN_CURLY_R);
+                break;
+
             default: {
                 enum lang_token_type symbol_type = (scanner->input[scanner->current] == '-' || Lang_IsDigit(scanner->input[scanner->current])) ? LANG_TOKEN_INT : LANG_TOKEN_SYMBOL;
 
@@ -174,6 +211,8 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                         case ' ':
                         case '\n':
                         case '\t':
+                        case '{':
+                        case '}':
                             goto __lang_scanner_goto_escape__; // Evil goto of doom
                             break;
                     }
