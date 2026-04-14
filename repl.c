@@ -53,6 +53,11 @@ int main() {
         fgets(buf, sizeof(buf), stdin);
         
         Lang_Eval(buf, strlen(buf), &lang);
+        if (lang.state != LANG_OK) {
+            puts(lang.error_msg);
+            return 1;
+        }
+        
         puts("ok");
 
         printf("(Stack):");
