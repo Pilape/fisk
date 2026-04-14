@@ -1,8 +1,9 @@
+#include <stdio.h>
+#include <string.h>
+
 #define LANG_IMPLEMENTATION
 #define LANG_NODE_COUNT 32
 #include "lang.h"
-#include <stdio.h>
-#include <string.h>
 
 void PrintItem(struct lang_item item, struct lang_ctx* ctx);
 
