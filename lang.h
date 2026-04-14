@@ -110,6 +110,7 @@ struct lang_scanner {
 
 ////////////////////////////////////////
 
+void Lang_Error(char* msg, struct lang_ctx* ctx);
 struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx);
 struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx);
 void Lang_Eval(char* input, unsigned int input_len, struct lang_ctx* ctx);
@@ -125,6 +126,7 @@ struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx) {
             return &(ctx->nodes[i]);
         } 
     }
+    Lang_Error("[ERROR]: Out of memory", ctx);
     return LANG_NULL;
 }
 
@@ -281,9 +283,33 @@ struct lang_item Lang_TokenToItem(struct lang_token token, struct lang_scanner* 
 
     switch (token.type) {
         case LANG_TOKEN_INT:
-            item.type = LANG_INT,
+            item.type = LANG_INT;
             item.value.integer = Lang_StrToInt(&scanner->input[token.start], token.length);
             break;
+
+        case LANG_TOKEN_STR: {
+            struct lang_node* str_head = Lang_AllocateNode(ctx);
+            if (str_head == LANG_NULL) break;
+            // First character
+            str_head->item.type = LANG_CHAR;
+            str_head->item.value.character = scanner->input[token.start+1];
+            
+            struct lang_node* current = str_head;
+            for (int i=2; i<token.length-1; i++) { // Skip the quotation marks and first char
+                struct lang_node* temp = Lang_AllocateNode(ctx);
+                if (str_head == LANG_NULL) break;
+
+                temp->item.type = LANG_CHAR;
+                temp->item.value.character = scanner->input[token.start+i];
+
+                current->next = temp;
+                current = temp;
+            }
+
+            item.type = LANG_QUOT;
+            item.value.quotation = str_head;
+            break;
+        }
 
         default:
             Lang_Error("[ERROR]: Unknown token type", ctx);
