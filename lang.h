@@ -46,6 +46,7 @@
 struct lang_ctx;
 
 enum lang_type {
+    LANG_NIL,
     LANG_INT,
     LANG_CHAR,
     LANG_QUOT,
@@ -111,6 +112,7 @@ struct lang_scanner {
 
 struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx);
 struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx);
+void Lang_Eval(char* input, unsigned int input_len, struct lang_ctx* ctx);
 
 #endif // LANG_HEADER
 #ifdef LANG_IMPLEMENTATION
@@ -131,6 +133,17 @@ struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx) {
 char Lang_IsDigit(char c) {
     if (c <'0' || c > '9') return 0;
     return 1;
+}
+
+int Lang_StrToInt(char* str, unsigned int strlen) {
+    int num = 0;
+
+    for (int i=0; i<strlen; i++) {
+        char digit = str[i] - 48;
+        num = num * 10 + digit;
+    }
+
+    return num;
 }
 
 ////////////////////////
@@ -262,9 +275,59 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
 
 ///////////////////////
 
+struct lang_item Lang_TokenToItem(struct lang_token token, struct lang_scanner* scanner, struct lang_ctx* ctx) {
+    struct lang_item item = { 0 };
+    item.type = LANG_NIL;
 
-////// CODEGEN ///////
+    switch (token.type) {
+        case LANG_TOKEN_INT:
+            item.type = LANG_INT,
+            item.value.integer = Lang_StrToInt(&scanner->input[token.start], token.length);
+            break;
 
+        default:
+            Lang_Error("[ERROR]: Unknown token type", ctx);
+            break;
+    }
+
+    return item;
+}
+
+void Lang_Push(struct lang_item item, struct lang_ctx* ctx) {
+    ctx->stack[ctx->stack_ptr++] = item;
+}
+
+void Lang_ExecuteItem(struct lang_item item, struct lang_ctx* ctx) {
+    switch (item.type) {
+        default:
+            Lang_Push(item, ctx);
+            break;
+            
+    }
+}
+
+////// RUNTIME ///////
+void Lang_Eval(char* input, unsigned int input_len, struct lang_ctx* ctx) {
+    struct lang_scanner scanner = {
+        .line = 1,
+        .start = 0,
+        .current = 0,
+        .input_len = input_len,
+        .input = input,
+    };
+
+    while (1) {
+        struct lang_token token = Lang_Scan(&scanner, ctx);
+        if (token.type == LANG_TOKEN_NONE) break;
+
+        Lang_ExecuteItem(Lang_TokenToItem(token, &scanner, ctx), ctx);
+
+    }
+    if (ctx->state == LANG_ERROR) {
+        return;
+    }
+
+}
 
 
 //////////////////////

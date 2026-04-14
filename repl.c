@@ -11,7 +11,7 @@ int main() {
     puts("Lang repl");
     puts("ctrl+c to exit");
 
-    unsigned int line = 1;
+    //unsigned int line = 1;
 
     while (1) {
         fputs("$ ", stdout);
@@ -19,7 +19,8 @@ int main() {
         char buf[256];
         fgets(buf, sizeof(buf), stdin);
         
-        struct lang_scanner scanner = {
+        Lang_Eval(buf, strlen(buf), &lang);
+        /*struct lang_scanner scanner = {
             .line = line,
             .start = 0,
             .current = 0,
@@ -42,9 +43,27 @@ int main() {
             return 1;
         }
 
-        line = scanner.line;
+        line = scanner.line;*/
 
         puts("ok");
+        printf("(Stack): ");
+        for (int i=0; i<lang.stack_ptr; i++) {
+            switch(lang.stack[i].type) {
+                case LANG_INT:
+                    printf("%d, ", lang.stack[i].value.integer);
+                    break;
+                
+                case LANG_NIL:
+                    printf("nil, ");
+                    break;
+
+                default:
+                    break;
+
+            }
+
+        }
+        puts("");
     }
 
     return 0;
