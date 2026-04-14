@@ -38,8 +38,6 @@
 //////////////////////////////////////
 
 #define LANG_NULL ((void*)0)
-#define LANG_TRUE 1
-#define LANG_FALSE 0
 
 #define LANG_ERROR_SIZE 512 // Size of error message buffer
 
@@ -120,8 +118,8 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx);
 
 struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx) {
     for (unsigned int i=0; i<LANG_NODE_COUNT; i++) {
-        if (ctx->nodes[i].allocated == LANG_FALSE) {
-            ctx->nodes[i].allocated = LANG_TRUE;
+        if (ctx->nodes[i].allocated == 0) {
+            ctx->nodes[i].allocated = 1;
             return &(ctx->nodes[i]);
         } 
     }
@@ -194,6 +192,21 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                 scanner->current++;
                 break;
 
+            case '"':
+                while (scanner->current++ < scanner->input_len) {
+                    if (scanner->input[scanner->current] == '\n') scanner->line++;
+                    if (scanner->input[scanner->current] == '"') {
+                        scanner->current++; // Consume last '"'
+                        break;
+                    }
+                }
+                if (scanner->current >= scanner->input_len) {
+                    Lang_Error("[ERROR]: Unterminated string", ctx);
+                    return LANG_TOKEN(LANG_TOKEN_NONE);
+                }
+                return LANG_TOKEN(LANG_TOKEN_STR);
+                break;
+
             case '(':
                 while (scanner->current++ < scanner->input_len) {
                     if (scanner->input[scanner->current] == ')') {
@@ -202,7 +215,7 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                     }
                 }
                 if (scanner->current >= scanner->input_len) {
-                    Lang_Error("[ERROR]: Eternal comment of doom", ctx);
+                    Lang_Error("[ERROR]: Unterminated comment", ctx);
                     return LANG_TOKEN(LANG_TOKEN_NONE);
                 }
                 break;
@@ -227,6 +240,7 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                         case '{':
                         case '}':
                         case '(':
+                        case '"':
                             goto __lang_scanner_goto_escape__; // Evil goto of doom
                             break;
                     }
