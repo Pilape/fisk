@@ -4,14 +4,47 @@
 #include <stdio.h>
 #include <string.h>
 
+void PrintItem(struct lang_item item, struct lang_ctx* ctx);
+
+void PrintQuotation(struct lang_item quot, struct lang_ctx* ctx) {
+    printf(" {");
+    struct lang_node* current = quot.value.quotation;
+    while (current != LANG_NULL) {
+        PrintItem(current->item, ctx);
+        current = current->next;
+    }
+    printf(" }");
+}
+
+void PrintItem(struct lang_item item, struct lang_ctx* ctx) {
+    switch (item.type) {
+        case LANG_INT:
+            printf(" %d", item.value.integer);
+            break;
+
+        case LANG_CHAR:
+            printf(" '%c'", item.value.character);
+            break;
+
+        case LANG_QUOT:
+            PrintQuotation(item, ctx);
+            break;
+
+        case LANG_PRIM:
+            printf(" [PRIMITIVE]");
+            break;
+
+        case LANG_NIL:
+            printf(" nil");
+            break;
+    }
+}
 
 int main() {
     struct lang_ctx lang = { 0 };
 
     puts("Lang repl");
     puts("ctrl+c to exit");
-
-    //unsigned int line = 1;
 
     while (1) {
         fputs("$ ", stdout);
@@ -20,48 +53,11 @@ int main() {
         fgets(buf, sizeof(buf), stdin);
         
         Lang_Eval(buf, strlen(buf), &lang);
-        /*struct lang_scanner scanner = {
-            .line = line,
-            .start = 0,
-            .current = 0,
-            .input_len = strlen(buf),
-            .input = buf,
-        };
-
-        while (1) {
-            struct lang_token token = Lang_Scan(&scanner, &lang);
-            if (token.type == LANG_TOKEN_NONE) break;
-
-            printf("Token: { line = %d, length = %d, type = %d, lexeme = '", token.line, token.length, token.type);
-            for (unsigned int i=token.start; i<token.start+token.length; i++) {
-                putc(scanner.input[i], stdout);
-            }
-            printf("' }\n");
-        }
-        if (lang.state == LANG_ERROR) {
-            puts(lang.error_msg);
-            return 1;
-        }
-
-        line = scanner.line;*/
-
         puts("ok");
-        printf("(Stack): ");
+
+        printf("(Stack):");
         for (int i=0; i<lang.stack_ptr; i++) {
-            switch(lang.stack[i].type) {
-                case LANG_INT:
-                    printf("%d, ", lang.stack[i].value.integer);
-                    break;
-                
-                case LANG_NIL:
-                    printf("nil, ");
-                    break;
-
-                default:
-                    break;
-
-            }
-
+            PrintItem(lang.stack[i], &lang);
         }
         puts("");
     }
