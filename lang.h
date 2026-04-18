@@ -374,9 +374,13 @@ struct lang_item Lang_TokenToItem(struct lang_token token, struct lang_scanner* 
             for (int i=0; i<token.length; i++) {
                 symbol[i] = scanner->input[i+token.start];
             }
+            symbol[token.length] = '\0';
 
             void (*func)(struct lang_ctx* ctx) = Lang_GetPrimitiveFunc(symbol, ctx);
-            if (func == LANG_NULL) break;
+            if (func == LANG_NULL) {
+                Lang_Error("[ERROR]: It's so over", ctx);
+                break;
+            }
 
             item.type = LANG_PRIM;
             item.value.primitive = func;
