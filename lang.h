@@ -190,19 +190,18 @@ void Lang_Error(char* msg, struct lang_ctx* ctx) {
 }
 
 void Lang_AddPrimitive(void (*func)(struct lang_ctx* ctx), char* name, struct lang_ctx* ctx) {
+    if (ctx->primitive_count >= LANG_PRIMITIVE_LIMIT) {
+        Lang_Error("[ERROR]: Primtive limit reached", ctx);
+        return;
+    } 
+
     for (int i=0; i<ctx->primitive_count; i++) {
         if (Lang_StrIsEqual(name, ctx->primitives[i].name)) {
             Lang_Error("[ERROR]: Primitive name is already taken", ctx);
             return;
         }
     }
-
-    ctx->primitive_count++;
-    if (ctx->primitive_count >= LANG_PRIMITIVE_LIMIT) {
-        Lang_Error("[ERROR]: Primtive limit reached", ctx);
-        return;
-    }
-    
+ 
     struct lang_primitive* primitive = &ctx->primitives[ctx->primitive_count];
 
     int name_length = Lang_Strlen(name);
@@ -217,6 +216,8 @@ void Lang_AddPrimitive(void (*func)(struct lang_ctx* ctx), char* name, struct la
     }
 
     primitive->c_func = func;
+
+    ctx->primitive_count++;
 }
 
 // What

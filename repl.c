@@ -49,7 +49,6 @@ int main() {
     struct lang_ctx lang = { 0 };
 
     Lang_AddPrimitive(&Primitive_PrintSomethingFunny, "funny", &lang);
-    Lang_AddPrimitive(&Primitive_PrintSomethingFunny, "funny", &lang);
     if (lang.state != LANG_OK) {
         puts(lang.error_msg);
         return 1;
