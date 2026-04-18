@@ -45,10 +45,20 @@ void Primitive_PrintSomethingFunny(struct lang_ctx* ctx) {
     puts("Something funny");
 }
 
+void Primitive_Add(struct lang_ctx* ctx) {
+    struct lang_item b = Lang_Pop(ctx);
+    struct lang_item a = Lang_Pop(ctx);
+
+    a.value.integer += b.value.integer;
+
+    Lang_Push(a, ctx);
+}
+
 int main() {
     struct lang_ctx lang = { 0 };
 
     Lang_AddPrimitive(&Primitive_PrintSomethingFunny, "funny", &lang);
+    Lang_AddPrimitive(&Primitive_Add, "+", &lang);
     if (lang.state != LANG_OK) {
         puts(lang.error_msg);
         return 1;

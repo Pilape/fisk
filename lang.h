@@ -113,6 +113,8 @@ void Lang_Error(char* msg, struct lang_ctx* ctx);
 struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx);
 struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx);
 void Lang_AddPrimitive(void (*func)(struct lang_ctx* ctx), char* name, struct lang_ctx* ctx);
+void Lang_Push(struct lang_item item, struct lang_ctx* ctx);
+struct lang_item Lang_Pop(struct lang_ctx* ctx);
 void Lang_Eval(char* input, unsigned int input_len, struct lang_ctx* ctx);
 
 #endif // LANG_HEADER
@@ -398,6 +400,10 @@ struct lang_item Lang_TokenToItem(struct lang_token token, struct lang_scanner* 
 
 void Lang_Push(struct lang_item item, struct lang_ctx* ctx) {
     ctx->stack[ctx->stack_ptr++] = item;
+}
+
+struct lang_item Lang_Pop(struct lang_ctx* ctx) {
+    return ctx->stack[--ctx->stack_ptr];
 }
 
 void Lang_ExecuteItem(struct lang_item item, struct lang_ctx* ctx) {
