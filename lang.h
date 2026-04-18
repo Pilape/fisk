@@ -64,7 +64,6 @@ struct lang_item {
         void (*primitive)(struct lang_ctx* ctx);
     } value;
 };
-
 struct lang_node {
     struct lang_item item;
     char allocated; 
@@ -113,6 +112,7 @@ struct lang_scanner {
 void Lang_Error(char* msg, struct lang_ctx* ctx);
 struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx);
 struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx);
+void Lang_AddPrimitive(void (*func)(struct lang_ctx* ctx), char* name, struct lang_ctx* ctx);
 void Lang_Eval(char* input, unsigned int input_len, struct lang_ctx* ctx);
 
 #endif // LANG_HEADER
@@ -165,6 +165,17 @@ unsigned int Lang_Strlen(char* str) {
     return len;
 }
 
+char Lang_StrIsEqual(char* str1, char* str2) {
+    int i = 0;
+    while (1) {
+        if (str1[i] != str2[i]) return 0;
+        if (str1[i] == '\0' || str2[i] == '\0') break;
+        i++;
+    }
+
+    return 1;
+}
+
 void Lang_Error(char* msg, struct lang_ctx* ctx) {
     ctx->state = LANG_ERROR;
     
@@ -176,6 +187,45 @@ void Lang_Error(char* msg, struct lang_ctx* ctx) {
     }
 
     ctx->error_msg[str_len] = '\0';
+}
+
+void Lang_AddPrimitive(void (*func)(struct lang_ctx* ctx), char* name, struct lang_ctx* ctx) {
+    for (int i=0; i<ctx->primitive_count; i++) {
+        if (Lang_StrIsEqual(name, ctx->primitives[i].name)) {
+            Lang_Error("[ERROR]: Primitive name is already taken", ctx);
+            return;
+        }
+    }
+
+    ctx->primitive_count++;
+    if (ctx->primitive_count >= LANG_PRIMITIVE_LIMIT) {
+        Lang_Error("[ERROR]: Primtive limit reached", ctx);
+        return;
+    }
+    
+    struct lang_primitive* primitive = &ctx->primitives[ctx->primitive_count];
+
+    int name_length = Lang_Strlen(name);
+    if (name_length >= LANG_PRIMITIVE_LIMIT) {
+        Lang_Error("[ERROR]: Primitive name is too long", ctx);
+        return;
+    }
+
+    // Copy string over (TODO: Maybe make this a seperate function. Too lazy to do it rn) (Kinda small so i might not need to...)
+    for (int i=0; i<name_length; i++) {
+        primitive->name[i] = name[i];
+    }
+
+    primitive->c_func = func;
+}
+
+// What
+void (*Lang_GetPrimitiveFunc(char* name, struct lang_ctx* ctx))(struct lang_ctx*) {
+    for (int i=0; i<ctx->primitive_count; i++) {
+        if (Lang_StrIsEqual(name, ctx->primitives[i].name)) return ctx->primitives[i].c_func;
+    }
+
+    return LANG_NULL;
 }
 
 enum lang_token_type {
@@ -318,6 +368,21 @@ struct lang_item Lang_TokenToItem(struct lang_token token, struct lang_scanner* 
             Lang_StrToItem(token, scanner, &item, ctx);
             break;
 
+        case LANG_TOKEN_SYMBOL: {
+            // Convert lexeme to string
+            char symbol[LANG_SYMBOL_LENGTH];
+            for (int i=0; i<token.length; i++) {
+                symbol[i] = scanner->input[i+token.start];
+            }
+
+            void (*func)(struct lang_ctx* ctx) = Lang_GetPrimitiveFunc(symbol, ctx);
+            if (func == LANG_NULL) break;
+
+            item.type = LANG_PRIM;
+            item.value.primitive = func;
+            break;
+        }
+
         default:
             Lang_Error("[ERROR]: Unknown token type", ctx);
             break;
@@ -332,6 +397,10 @@ void Lang_Push(struct lang_item item, struct lang_ctx* ctx) {
 
 void Lang_ExecuteItem(struct lang_item item, struct lang_ctx* ctx) {
     switch (item.type) {
+        case LANG_PRIM:
+            item.value.primitive(ctx);
+            break;
+
         default:
             Lang_Push(item, ctx);
             break;

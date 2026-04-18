@@ -41,8 +41,19 @@ void PrintItem(struct lang_item item, struct lang_ctx* ctx) {
     }
 }
 
+void Primitive_PrintSomethingFunny(struct lang_ctx* ctx) {
+    puts("Something funny");
+}
+
 int main() {
     struct lang_ctx lang = { 0 };
+
+    Lang_AddPrimitive(&Primitive_PrintSomethingFunny, "funny", &lang);
+    Lang_AddPrimitive(&Primitive_PrintSomethingFunny, "funny", &lang);
+    if (lang.state != LANG_OK) {
+        puts(lang.error_msg);
+        return 1;
+    }
 
     puts("Lang repl");
     puts("ctrl+c to exit");
