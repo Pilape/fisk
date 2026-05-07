@@ -391,6 +391,7 @@ struct lang_item Lang_TokenToItem(struct lang_token token, struct lang_scanner* 
         }
 
         default:
+            // Should not be reachable (Keeping it just in case)
             Lang_Error("[ERROR]: Unknown token type", ctx);
             break;
     }
