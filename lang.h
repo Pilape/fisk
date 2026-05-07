@@ -144,12 +144,17 @@ char Lang_IsDigit(char c) {
 }
 
 int Lang_StrToInt(char* str, unsigned int strlen) {
+    char is_negative = str[0] == '-';
+
     int num = 0;
 
-    for (int i=0; i<strlen; i++) {
+    int start_index = is_negative;
+    for (int i=is_negative; i<strlen; i++) {
         char digit = str[i] - 48;
         num = num * 10 + digit;
     }
+
+    if (is_negative) num *= -1;
 
     return num;
 }
