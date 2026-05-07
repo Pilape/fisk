@@ -149,7 +149,7 @@ int Lang_StrToInt(char* str, unsigned int strlen) {
     int num = 0;
 
     int start_index = is_negative;
-    for (int i=is_negative; i<strlen; i++) {
+    for (int i=start_index; i<strlen; i++) {
         char digit = str[i] - 48;
         num = num * 10 + digit;
     }
