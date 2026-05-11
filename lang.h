@@ -1,5 +1,5 @@
-#ifndef LANG_HEADER
-#define LANG_HEADER
+#ifndef FISK_HEADER
+#define FISK_HEADER
 ////////////////CONFIG////////////////
 
     ////////MEMORY/////////
@@ -8,142 +8,142 @@
     // Therefore, the memory used is decided at compile time.
 
     // The size of the data stack.
-    #ifndef LANG_STACK_SIZE
-        #define LANG_STACK_SIZE 256
+    #ifndef FISK_STACK_SIZE
+        #define FISK_STACK_SIZE 256
     #endif
 
     // How many values/nodes are available.
     // Basically how big the languages memory arena is.
-    #ifndef LANG_NODE_COUNT 
-    #define LANG_NODE_COUNT 0x4000
+    #ifndef FISK_NODE_COUNT 
+    #define FISK_NODE_COUNT 0x4000
     #endif
 
     // How many primitives the language can have, also used by "built in" primitives and the standard library.
-    #ifndef LANG_PRIMITIVE_LIMIT
-    #define LANG_PRIMITIVE_LIMIT 256
+    #ifndef FISK_PRIMITIVE_LIMIT
+    #define FISK_PRIMITIVE_LIMIT 256
     #endif
 
     // How many functions and variables the language can have.
-    #ifndef LANG_SYMBOL_LIMIT
-    #define LANG_SYMBOL_LIMIT 512
+    #ifndef FISK_SYMBOL_LIMIT
+    #define FISK_SYMBOL_LIMIT 512
     #endif
 
     // The max length of variable, function and primitive names
-    #ifndef LANG_SYMBOL_LENGTH
-    #define LANG_SYMBOL_LENGTH 32
+    #ifndef FISK_SYMBOL_LENGTH
+    #define FISK_SYMBOL_LENGTH 32
     #endif
 
     ///////////////////////
     
 //////////////////////////////////////
 
-#define LANG_NULL ((void*)0)
+#define FISK_NULL ((void*)0)
 
-#define LANG_ERROR_SIZE 512 // Size of error message buffer
+#define FISK_ERROR_SIZE 512 // Size of error message buffer
 
 ////////////////STRUCTS/////////////////
 
-struct lang_ctx;
+struct fisk_ctx;
 
-enum lang_type {
-    LANG_NIL,
-    LANG_INT,
-    LANG_CHAR,
-    LANG_QUOT,
-    LANG_PRIM,
+enum fisk_type {
+    FISK_NIL,
+    FISK_INT,
+    FISK_CHAR,
+    FISK_QUOT,
+    FISK_PRIM,
 };
 
-struct lang_node;
+struct fisk_node;
 
-struct lang_item {
-    enum lang_type type;
+struct fisk_item {
+    enum fisk_type type;
     union {
         int integer;
         char character;
-        struct lang_node* quotation;
-        void (*primitive)(struct lang_ctx* ctx);
+        struct fisk_node* quotation;
+        void (*primitive)(struct fisk_ctx* ctx);
     } value;
 };
-struct lang_node {
-    struct lang_item item;
+struct fisk_node {
+    struct fisk_item item;
     char allocated; 
 
-    struct lang_node* next;
+    struct fisk_node* next;
 };
 
-struct lang_primitive {
-    char name[LANG_SYMBOL_LENGTH];
-    void (*c_func)(struct lang_ctx* ctx);
+struct fisk_primitive {
+    char name[FISK_SYMBOL_LENGTH];
+    void (*c_func)(struct fisk_ctx* ctx);
 };
 
-struct lang_symbol {
-    char name[LANG_SYMBOL_LENGTH];
-    struct lang_node* value;
+struct fisk_symbol {
+    char name[FISK_SYMBOL_LENGTH];
+    struct fisk_node* value;
 };
 
-enum lang_state {
-    LANG_OK,
-    LANG_ERROR,
+enum fisk_state {
+    FISK_OK,
+    FISK_ERROR,
 };
 
-struct lang_ctx {
-    struct lang_node nodes[LANG_NODE_COUNT];
+struct fisk_ctx {
+    struct fisk_node nodes[FISK_NODE_COUNT];
 
-    struct lang_item stack[LANG_STACK_SIZE];
+    struct fisk_item stack[FISK_STACK_SIZE];
     int stack_ptr;
 
-    struct lang_primitive primitives[LANG_PRIMITIVE_LIMIT];
+    struct fisk_primitive primitives[FISK_PRIMITIVE_LIMIT];
     int primitive_count;
 
-    struct lang_symbol symbols[LANG_SYMBOL_LIMIT];
+    struct fisk_symbol symbols[FISK_SYMBOL_LIMIT];
     int symbol_count;
 
-    char error_msg[LANG_ERROR_SIZE+1]; // +1 for '\0'
-    enum lang_state state;
+    char error_msg[FISK_ERROR_SIZE+1]; // +1 for '\0'
+    enum fisk_state state;
 };
 
-struct lang_scanner {
+struct fisk_scanner {
     unsigned int start, current, line, input_len;
     char* input;
 };
 
 ////////////////////////////////////////
 
-void Lang_Error(char* msg, struct lang_ctx* ctx);
-struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx);
-struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx);
-void Lang_AddPrimitive(void (*func)(struct lang_ctx* ctx), char* name, struct lang_ctx* ctx);
-void Lang_Push(struct lang_item item, struct lang_ctx* ctx);
-struct lang_item Lang_Pop(struct lang_ctx* ctx);
-void Lang_Eval(char* input, unsigned int input_len, struct lang_ctx* ctx);
+void Fisk_Error(char* msg, struct fisk_ctx* ctx);
+struct fisk_node* Fisk_AllocateNode(struct fisk_ctx* ctx);
+struct fisk_token Fisk_Scan(struct fisk_scanner* scanner, struct fisk_ctx* ctx);
+void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fisk_ctx* ctx);
+void Fisk_Push(struct fisk_item item, struct fisk_ctx* ctx);
+struct fisk_item Fisk_Pop(struct fisk_ctx* ctx);
+void Fisk_Eval(char* input, unsigned int input_len, struct fisk_ctx* ctx);
 
-#endif // LANG_HEADER
-#ifdef LANG_IMPLEMENTATION
-#undef LANG_IMPLEMENTATION
+#endif // FISK_HEADER
+#ifdef FISK_IMPLEMENTATION
+#undef FISK_IMPLEMENTATION
 
-struct lang_node* Lang_AllocateNode(struct lang_ctx* ctx) {
-    for (unsigned int i=0; i<LANG_NODE_COUNT; i++) {
+struct fisk_node* Fisk_AllocateNode(struct fisk_ctx* ctx) {
+    for (unsigned int i=0; i<FISK_NODE_COUNT; i++) {
         if (ctx->nodes[i].allocated == 0) {
             ctx->nodes[i].allocated = 1;
 
-            ctx->nodes[i].next = LANG_NULL;
-            ctx->nodes[i].item.type = LANG_NIL;
+            ctx->nodes[i].next = FISK_NULL;
+            ctx->nodes[i].item.type = FISK_NIL;
 
             return &(ctx->nodes[i]);
         } 
     }
-    Lang_Error("[ERROR]: Out of memory", ctx);
-    return LANG_NULL;
+    Fisk_Error("[ERROR]: Out of memory", ctx);
+    return FISK_NULL;
 }
 
 //////// NUMBER ////////
 
-char Lang_IsDigit(char c) {
+char Fisk_IsDigit(char c) {
     if (c <'0' || c > '9') return 0;
     return 1;
 }
 
-int Lang_StrToInt(char* str, unsigned int strlen) {
+int Fisk_StrToInt(char* str, unsigned int strlen) {
     char is_negative = str[0] == '-';
 
     int num = 0;
@@ -163,7 +163,7 @@ int Lang_StrToInt(char* str, unsigned int strlen) {
 
 /////// SCANNER ///////
 
-unsigned int Lang_Strlen(char* str) {
+unsigned int Fisk_Strlen(char* str) {
     unsigned int len = 0;
     while (str[len] != '\0') {
         len++;
@@ -172,7 +172,7 @@ unsigned int Lang_Strlen(char* str) {
     return len;
 }
 
-char Lang_StrIsEqual(char* str1, char* str2) {
+char Fisk_StrIsEqual(char* str1, char* str2) {
     int i = 0;
     while (1) {
         if (str1[i] != str2[i]) return 0;
@@ -183,11 +183,11 @@ char Lang_StrIsEqual(char* str1, char* str2) {
     return 1;
 }
 
-void Lang_Error(char* msg, struct lang_ctx* ctx) {
-    ctx->state = LANG_ERROR;
+void Fisk_Error(char* msg, struct fisk_ctx* ctx) {
+    ctx->state = FISK_ERROR;
     
-    int str_len = Lang_Strlen(msg);
-    if (str_len > LANG_ERROR_SIZE) str_len = LANG_ERROR_SIZE;
+    int str_len = Fisk_Strlen(msg);
+    if (str_len > FISK_ERROR_SIZE) str_len = FISK_ERROR_SIZE;
 
     for (int i=0; i<str_len; i++) {
         ctx->error_msg[i] = msg[i];
@@ -196,24 +196,24 @@ void Lang_Error(char* msg, struct lang_ctx* ctx) {
     ctx->error_msg[str_len] = '\0';
 }
 
-void Lang_AddPrimitive(void (*func)(struct lang_ctx* ctx), char* name, struct lang_ctx* ctx) {
-    if (ctx->primitive_count >= LANG_PRIMITIVE_LIMIT) {
-        Lang_Error("[ERROR]: Primtive limit reached", ctx);
+void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fisk_ctx* ctx) {
+    if (ctx->primitive_count >= FISK_PRIMITIVE_LIMIT) {
+        Fisk_Error("[ERROR]: Primtive limit reached", ctx);
         return;
     } 
 
     for (int i=0; i<ctx->primitive_count; i++) {
-        if (Lang_StrIsEqual(name, ctx->primitives[i].name)) {
-            Lang_Error("[ERROR]: Primitive name is already taken", ctx);
+        if (Fisk_StrIsEqual(name, ctx->primitives[i].name)) {
+            Fisk_Error("[ERROR]: Primitive name is already taken", ctx);
             return;
         }
     }
  
-    struct lang_primitive* primitive = &ctx->primitives[ctx->primitive_count];
+    struct fisk_primitive* primitive = &ctx->primitives[ctx->primitive_count];
 
-    int name_length = Lang_Strlen(name);
-    if (name_length >= LANG_PRIMITIVE_LIMIT) {
-        Lang_Error("[ERROR]: Primitive name is too long", ctx);
+    int name_length = Fisk_Strlen(name);
+    if (name_length >= FISK_PRIMITIVE_LIMIT) {
+        Fisk_Error("[ERROR]: Primitive name is too long", ctx);
         return;
     }
 
@@ -228,37 +228,37 @@ void Lang_AddPrimitive(void (*func)(struct lang_ctx* ctx), char* name, struct la
 }
 
 // What
-void (*Lang_GetPrimitiveFunc(char* name, struct lang_ctx* ctx))(struct lang_ctx*) {
+void (*Fisk_GetPrimitiveFunc(char* name, struct fisk_ctx* ctx))(struct fisk_ctx*) {
     for (int i=0; i<ctx->primitive_count; i++) {
-        if (Lang_StrIsEqual(name, ctx->primitives[i].name)) return ctx->primitives[i].c_func;
+        if (Fisk_StrIsEqual(name, ctx->primitives[i].name)) return ctx->primitives[i].c_func;
     }
 
-    return LANG_NULL;
+    return FISK_NULL;
 }
 
-enum lang_token_type {
-    LANG_TOKEN_INT,
-    LANG_TOKEN_STR,
-    LANG_TOKEN_SYMBOL,
+enum fisk_token_type {
+    FISK_TOKEN_INT,
+    FISK_TOKEN_STR,
+    FISK_TOKEN_SYMBOL,
 
-    LANG_TOKEN_CURLY_L,
-    LANG_TOKEN_CURLY_R,
+    FISK_TOKEN_CURLY_L,
+    FISK_TOKEN_CURLY_R,
 
-    LANG_TOKEN_NONE,
+    FISK_TOKEN_NONE,
 };
 
-struct lang_token {
-    enum lang_token_type type;
+struct fisk_token {
+    enum fisk_token_type type;
     unsigned int start, length, line;
 };
 
-#define LANG_TOKEN(token_type) ((struct lang_token){.type=(token_type), .line=scanner->line, .start=scanner->start, .length=scanner->current-scanner->start})
+#define FISK_TOKEN(token_type) ((struct fisk_token){.type=(token_type), .line=scanner->line, .start=scanner->start, .length=scanner->current-scanner->start})
 
-struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) {
+struct fisk_token Fisk_Scan(struct fisk_scanner* scanner, struct fisk_ctx* ctx) {
     while (1) {
         scanner->start = scanner->current;
         if (scanner->current >= scanner->input_len) {
-            return LANG_TOKEN(LANG_TOKEN_NONE);
+            return FISK_TOKEN(FISK_TOKEN_NONE);
         }
 
         switch (scanner->input[scanner->current]) {
@@ -278,10 +278,10 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                     }
                 }
                 if (scanner->current >= scanner->input_len) {
-                    Lang_Error("[ERROR]: Unterminated string", ctx);
-                    return LANG_TOKEN(LANG_TOKEN_NONE);
+                    Fisk_Error("[ERROR]: Unterminated string", ctx);
+                    return FISK_TOKEN(FISK_TOKEN_NONE);
                 }
-                return LANG_TOKEN(LANG_TOKEN_STR);
+                return FISK_TOKEN(FISK_TOKEN_STR);
                 break;
 
             case '(':
@@ -292,22 +292,22 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                     }
                 }
                 if (scanner->current >= scanner->input_len) {
-                    Lang_Error("[ERROR]: Unterminated comment", ctx);
-                    return LANG_TOKEN(LANG_TOKEN_NONE);
+                    Fisk_Error("[ERROR]: Unterminated comment", ctx);
+                    return FISK_TOKEN(FISK_TOKEN_NONE);
                 }
                 break;
 
             case '{':
                 scanner->current++;
-                return LANG_TOKEN(LANG_TOKEN_CURLY_L);
+                return FISK_TOKEN(FISK_TOKEN_CURLY_L);
                 break;
             case '}':
                 scanner->current++;
-                return LANG_TOKEN(LANG_TOKEN_CURLY_R);
+                return FISK_TOKEN(FISK_TOKEN_CURLY_R);
                 break;
 
             default: {
-                enum lang_token_type symbol_type = (scanner->input[scanner->current] == '-' || Lang_IsDigit(scanner->input[scanner->current])) ? LANG_TOKEN_INT : LANG_TOKEN_SYMBOL;
+                enum fisk_token_type symbol_type = (scanner->input[scanner->current] == '-' || Fisk_IsDigit(scanner->input[scanner->current])) ? FISK_TOKEN_INT : FISK_TOKEN_SYMBOL;
 
                 while (scanner->current++ < scanner->input_len) {
                     switch (scanner->input[scanner->current]) {
@@ -318,116 +318,116 @@ struct lang_token Lang_Scan(struct lang_scanner* scanner, struct lang_ctx* ctx) 
                         case '}':
                         case '(':
                         case '"':
-                            goto __lang_scanner_goto_escape__; // Evil goto of doom
+                            goto __fisk_scanner_goto_escape__; // Evil goto of doom
                             break;
                     }
-                    if (!Lang_IsDigit(scanner->input[scanner->current])) symbol_type = LANG_TOKEN_SYMBOL;
+                    if (!Fisk_IsDigit(scanner->input[scanner->current])) symbol_type = FISK_TOKEN_SYMBOL;
                 }
 
-                __lang_scanner_goto_escape__:
-                    if (scanner->current-scanner->start == 1 && scanner->input[scanner->start] == '-') symbol_type = LANG_TOKEN_SYMBOL; // '-' is not a number (crazy, i know)
-                    return LANG_TOKEN(symbol_type);
+                __fisk_scanner_goto_escape__:
+                    if (scanner->current-scanner->start == 1 && scanner->input[scanner->start] == '-') symbol_type = FISK_TOKEN_SYMBOL; // '-' is not a number (crazy, i know)
+                    return FISK_TOKEN(symbol_type);
                 break;
             }
         }
     }
 }
 
-#undef LANG_TOKEN
+#undef FISK_TOKEN
 
 
 
 ///////////////////////
 
-static inline void Lang_StrToItem(struct lang_token token, struct lang_scanner* scanner, struct lang_item* item, struct lang_ctx* ctx) {
-    item->type = LANG_QUOT;
+static inline void Fisk_StrToItem(struct fisk_token token, struct fisk_scanner* scanner, struct fisk_item* item, struct fisk_ctx* ctx) {
+    item->type = FISK_QUOT;
     if (token.length == 0) return;
 
     // First character
-    struct lang_node* current = Lang_AllocateNode(ctx);
-    if (current == LANG_NULL) return;
-    current->item.type = LANG_CHAR;
+    struct fisk_node* current = Fisk_AllocateNode(ctx);
+    if (current == FISK_NULL) return;
+    current->item.type = FISK_CHAR;
     current->item.value.character = scanner->input[token.start+1]; 
     
     item->value.quotation = current;
 
     for (int i=2; i<token.length-1; i++) { // Ignore quotation marks and first char
-        current->next = Lang_AllocateNode(ctx);
-        if (current->next == LANG_NULL) break;
+        current->next = Fisk_AllocateNode(ctx);
+        if (current->next == FISK_NULL) break;
 
         current = current->next;
 
-        current->item.type = LANG_CHAR;
+        current->item.type = FISK_CHAR;
         current->item.value.character = scanner->input[token.start+i]; 
     }
 }
 
-struct lang_item Lang_TokenToItem(struct lang_token token, struct lang_scanner* scanner, struct lang_ctx* ctx) {
-    struct lang_item item = { 0 };
-    item.type = LANG_NIL;
+struct fisk_item Fisk_TokenToItem(struct fisk_token token, struct fisk_scanner* scanner, struct fisk_ctx* ctx) {
+    struct fisk_item item = { 0 };
+    item.type = FISK_NIL;
 
     switch (token.type) {
-        case LANG_TOKEN_INT:
-            item.type = LANG_INT;
-            item.value.integer = Lang_StrToInt(&scanner->input[token.start], token.length);
+        case FISK_TOKEN_INT:
+            item.type = FISK_INT;
+            item.value.integer = Fisk_StrToInt(&scanner->input[token.start], token.length);
             break;
 
-        case LANG_TOKEN_STR:
-            Lang_StrToItem(token, scanner, &item, ctx);
+        case FISK_TOKEN_STR:
+            Fisk_StrToItem(token, scanner, &item, ctx);
             break;
 
-        case LANG_TOKEN_SYMBOL: {
+        case FISK_TOKEN_SYMBOL: {
             // Convert lexeme to string
-            char symbol[LANG_SYMBOL_LENGTH];
+            char symbol[FISK_SYMBOL_LENGTH];
             for (int i=0; i<token.length; i++) {
                 symbol[i] = scanner->input[i+token.start];
             }
             symbol[token.length] = '\0';
 
-            void (*func)(struct lang_ctx* ctx) = Lang_GetPrimitiveFunc(symbol, ctx);
-            if (func == LANG_NULL) {
-                Lang_Error("[ERROR]: It's so over", ctx);
+            void (*func)(struct fisk_ctx* ctx) = Fisk_GetPrimitiveFunc(symbol, ctx);
+            if (func == FISK_NULL) {
+                Fisk_Error("[ERROR]: It's so over", ctx);
                 break;
             }
 
-            item.type = LANG_PRIM;
+            item.type = FISK_PRIM;
             item.value.primitive = func;
             break;
         }
 
         default:
             // Should not be reachable (Keeping it just in case)
-            Lang_Error("[ERROR]: Unknown token type", ctx);
+            Fisk_Error("[ERROR]: Unknown token type", ctx);
             break;
     }
 
     return item;
 }
 
-void Lang_Push(struct lang_item item, struct lang_ctx* ctx) {
+void Fisk_Push(struct fisk_item item, struct fisk_ctx* ctx) {
     ctx->stack[ctx->stack_ptr++] = item;
 }
 
-struct lang_item Lang_Pop(struct lang_ctx* ctx) {
+struct fisk_item Fisk_Pop(struct fisk_ctx* ctx) {
     return ctx->stack[--ctx->stack_ptr];
 }
 
-void Lang_ExecuteItem(struct lang_item item, struct lang_ctx* ctx) {
+void Fisk_ExecuteItem(struct fisk_item item, struct fisk_ctx* ctx) {
     switch (item.type) {
-        case LANG_PRIM:
+        case FISK_PRIM:
             item.value.primitive(ctx);
             break;
 
         default:
-            Lang_Push(item, ctx);
+            Fisk_Push(item, ctx);
             break;
             
     }
 }
 
 ////// RUNTIME ///////
-void Lang_Eval(char* input, unsigned int input_len, struct lang_ctx* ctx) {
-    struct lang_scanner scanner = {
+void Fisk_Eval(char* input, unsigned int input_len, struct fisk_ctx* ctx) {
+    struct fisk_scanner scanner = {
         .line = 1,
         .start = 0,
         .current = 0,
@@ -436,15 +436,15 @@ void Lang_Eval(char* input, unsigned int input_len, struct lang_ctx* ctx) {
     };
 
     while (1) {
-        struct lang_token token = Lang_Scan(&scanner, ctx);
-        if (token.type == LANG_TOKEN_NONE) break;
+        struct fisk_token token = Fisk_Scan(&scanner, ctx);
+        if (token.type == FISK_TOKEN_NONE) break;
         
-        struct lang_item item = Lang_TokenToItem(token, &scanner, ctx);
-        if (ctx->state != LANG_OK) return;
-        Lang_ExecuteItem(item, ctx);
+        struct fisk_item item = Fisk_TokenToItem(token, &scanner, ctx);
+        if (ctx->state != FISK_OK) return;
+        Fisk_ExecuteItem(item, ctx);
 
     }
-    if (ctx->state == LANG_ERROR) {
+    if (ctx->state == FISK_ERROR) {
         return;
     }
 
@@ -454,4 +454,4 @@ void Lang_Eval(char* input, unsigned int input_len, struct lang_ctx* ctx) {
 //////////////////////
 
 
-#endif // LANG_IMPLEMENTATION
+#endif // FISK_IMPLEMENTATION

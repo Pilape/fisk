@@ -1,89 +1,89 @@
 #include <stdio.h>
 #include <string.h>
 
-#define LANG_IMPLEMENTATION
-#define LANG_NODE_COUNT 32
+#define FISK_IMPLEMENTATION
+#define FISK_NODE_COUNT 32
 #include "lang.h"
 
-void PrintItem(struct lang_item item, struct lang_ctx* ctx);
+void PrintItem(struct fisk_item item, struct fisk_ctx* ctx);
 
-void PrintQuotation(struct lang_item quot, struct lang_ctx* ctx) {
+void PrintQuotation(struct fisk_item quot, struct fisk_ctx* ctx) {
     printf(" {");
-    struct lang_node* current = quot.value.quotation;
-    while (current != LANG_NULL) {
+    struct fisk_node* current = quot.value.quotation;
+    while (current != FISK_NULL) {
         PrintItem(current->item, ctx);
         current = current->next;
     }
     printf(" }");
 }
 
-void PrintItem(struct lang_item item, struct lang_ctx* ctx) {
+void PrintItem(struct fisk_item item, struct fisk_ctx* ctx) {
     switch (item.type) {
-        case LANG_INT:
+        case FISK_INT:
             printf(" %d", item.value.integer);
             break;
 
-        case LANG_CHAR:
+        case FISK_CHAR:
             printf(" '%c'", item.value.character);
             break;
 
-        case LANG_QUOT:
+        case FISK_QUOT:
             PrintQuotation(item, ctx);
             break;
 
-        case LANG_PRIM:
+        case FISK_PRIM:
             printf(" [PRIMITIVE]");
             break;
 
-        case LANG_NIL:
+        case FISK_NIL:
             printf(" nil");
             break;
     }
 }
 
-void Primitive_PrintSomethingFunny(struct lang_ctx* ctx) {
+void Primitive_PrintSomethingFunny(struct fisk_ctx* ctx) {
     puts("Something funny");
 }
 
-void Primitive_Add(struct lang_ctx* ctx) {
-    struct lang_item b = Lang_Pop(ctx);
-    struct lang_item a = Lang_Pop(ctx);
+void Primitive_Add(struct fisk_ctx* ctx) {
+    struct fisk_item b = Fisk_Pop(ctx);
+    struct fisk_item a = Fisk_Pop(ctx);
 
     a.value.integer += b.value.integer;
 
-    Lang_Push(a, ctx);
+    Fisk_Push(a, ctx);
 }
 
 int main() {
-    struct lang_ctx lang = { 0 };
+    struct fisk_ctx fisk = { 0 };
 
-    Lang_AddPrimitive(&Primitive_PrintSomethingFunny, "funny", &lang);
-    Lang_AddPrimitive(&Primitive_Add, "+", &lang);
-    if (lang.state != LANG_OK) {
-        puts(lang.error_msg);
+    Fisk_AddPrimitive(&Primitive_PrintSomethingFunny, "funny", &fisk);
+    Fisk_AddPrimitive(&Primitive_Add, "+", &fisk);
+    if (fisk.state != FISK_OK) {
+        puts(fisk.error_msg);
         return 1;
     }
 
-    puts("Lang repl");
+    puts("== FISK ==");
     puts("ctrl+c to exit");
 
     while (1) {
-        fputs("$ ", stdout);
+        fputs("><> ", stdout);
         
         char buf[256];
         fgets(buf, sizeof(buf), stdin);
         
-        Lang_Eval(buf, strlen(buf), &lang);
-        if (lang.state != LANG_OK) {
-            puts(lang.error_msg);
+        Fisk_Eval(buf, strlen(buf), &fisk);
+        if (fisk.state != FISK_OK) {
+            puts(fisk.error_msg);
             return 1;
         }
         
         puts("ok");
 
         printf("(Stack):");
-        for (int i=0; i<lang.stack_ptr; i++) {
-            PrintItem(lang.stack[i], &lang);
+        for (int i=0; i<fisk.stack_ptr; i++) {
+            PrintItem(fisk.stack[i], &fisk);
         }
         puts("");
     }
