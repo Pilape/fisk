@@ -102,16 +102,10 @@ struct fisk_ctx {
     enum fisk_state state;
 };
 
-struct fisk_scanner {
-    unsigned int start, current, line, input_len;
-    char* input;
-};
-
 ////////////////////////////////////////
 
 void Fisk_Error(char* msg, struct fisk_ctx* ctx);
 struct fisk_node* Fisk_AllocateNode(struct fisk_ctx* ctx);
-struct fisk_token Fisk_Scan(struct fisk_scanner* scanner, struct fisk_ctx* ctx);
 void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fisk_ctx* ctx);
 void Fisk_Push(struct fisk_item item, struct fisk_ctx* ctx);
 struct fisk_item Fisk_Pop(struct fisk_ctx* ctx);
@@ -121,22 +115,11 @@ void Fisk_Eval(char* input, unsigned int input_len, struct fisk_ctx* ctx);
 #ifdef FISK_IMPLEMENTATION
 #undef FISK_IMPLEMENTATION
 
-struct fisk_node* Fisk_AllocateNode(struct fisk_ctx* ctx) {
-    for (unsigned int i=0; i<FISK_NODE_COUNT; i++) {
-        if (ctx->nodes[i].allocated == 0) {
-            ctx->nodes[i].allocated = 1;
 
-            ctx->nodes[i].next = FISK_NULL;
-            ctx->nodes[i].item.type = FISK_NIL;
+//////////////////////////////////////////////////////////////////////////////////// HELPER / MISC /////////////////////////////////////////////////////////////////////////////
 
-            return &(ctx->nodes[i]);
-        } 
-    }
-    Fisk_Error("[ERROR]: Out of memory", ctx);
-    return FISK_NULL;
-}
 
-//////// NUMBER ////////
+///////////////////////// NUMBER /////////////////////////////
 
 char Fisk_IsDigit(char c) {
     if (c <'0' || c > '9') return 0;
@@ -159,9 +142,9 @@ int Fisk_StrToInt(char* str, unsigned int strlen) {
     return num;
 }
 
-////////////////////////
+//////////////////////////////////////////////////////////////
 
-/////// SCANNER ///////
+/////////////////////////////// STRING //////////////////////////////
 
 unsigned int Fisk_Strlen(char* str) {
     unsigned int len = 0;
@@ -182,59 +165,16 @@ char Fisk_StrIsEqual(char* str1, char* str2) {
 
     return 1;
 }
+//////////////////////////////////////////////////////////////////
 
-void Fisk_Error(char* msg, struct fisk_ctx* ctx) {
-    ctx->state = FISK_ERROR;
-    
-    int str_len = Fisk_Strlen(msg);
-    if (str_len > FISK_ERROR_SIZE) str_len = FISK_ERROR_SIZE;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    for (int i=0; i<str_len; i++) {
-        ctx->error_msg[i] = msg[i];
-    }
 
-    ctx->error_msg[str_len] = '\0';
-}
-
-void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fisk_ctx* ctx) {
-    if (ctx->primitive_count >= FISK_PRIMITIVE_LIMIT) {
-        Fisk_Error("[ERROR]: Primtive limit reached", ctx);
-        return;
-    } 
-
-    for (int i=0; i<ctx->primitive_count; i++) {
-        if (Fisk_StrIsEqual(name, ctx->primitives[i].name)) {
-            Fisk_Error("[ERROR]: Primitive name is already taken", ctx);
-            return;
-        }
-    }
- 
-    struct fisk_primitive* primitive = &ctx->primitives[ctx->primitive_count];
-
-    int name_length = Fisk_Strlen(name);
-    if (name_length >= FISK_PRIMITIVE_LIMIT) {
-        Fisk_Error("[ERROR]: Primitive name is too long", ctx);
-        return;
-    }
-
-    // Copy string over (TODO: Maybe make this a seperate function. Too lazy to do it rn) (Kinda small so i might not need to...)
-    for (int i=0; i<name_length; i++) {
-        primitive->name[i] = name[i];
-    }
-
-    primitive->c_func = func;
-
-    ctx->primitive_count++;
-}
-
-// What
-void (*Fisk_GetPrimitiveFunc(char* name, struct fisk_ctx* ctx))(struct fisk_ctx*) {
-    for (int i=0; i<ctx->primitive_count; i++) {
-        if (Fisk_StrIsEqual(name, ctx->primitives[i].name)) return ctx->primitives[i].c_func;
-    }
-
-    return FISK_NULL;
-}
+/////////////////////////////////////////////////////////////////////////////////////////// SCANNER ////////////////////////////////////////////////////////////////////////////////////////////
+struct fisk_scanner {
+    unsigned int start, current, line, input_len;
+    char* input;
+};
 
 enum fisk_token_type {
     FISK_TOKEN_INT,
@@ -334,9 +274,88 @@ struct fisk_token Fisk_Scan(struct fisk_scanner* scanner, struct fisk_ctx* ctx) 
 }
 
 #undef FISK_TOKEN
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
+
+
+
+
+
+
+
+
+
+
+struct fisk_node* Fisk_AllocateNode(struct fisk_ctx* ctx) {
+    for (unsigned int i=0; i<FISK_NODE_COUNT; i++) {
+        if (ctx->nodes[i].allocated == 0) {
+            ctx->nodes[i].allocated = 1;
+
+            ctx->nodes[i].next = FISK_NULL;
+            ctx->nodes[i].item.type = FISK_NIL;
+
+            return &(ctx->nodes[i]);
+        } 
+    }
+    Fisk_Error("[ERROR]: Out of memory", ctx);
+    return FISK_NULL;
+}
+
+/////// SCANNER ///////
+void Fisk_Error(char* msg, struct fisk_ctx* ctx) {
+    ctx->state = FISK_ERROR;
+    
+    int str_len = Fisk_Strlen(msg);
+    if (str_len > FISK_ERROR_SIZE) str_len = FISK_ERROR_SIZE;
+
+    for (int i=0; i<str_len; i++) {
+        ctx->error_msg[i] = msg[i];
+    }
+
+    ctx->error_msg[str_len] = '\0';
+}
+
+void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fisk_ctx* ctx) {
+    if (ctx->primitive_count >= FISK_PRIMITIVE_LIMIT) {
+        Fisk_Error("[ERROR]: Primtive limit reached", ctx);
+        return;
+    } 
+
+    for (int i=0; i<ctx->primitive_count; i++) {
+        if (Fisk_StrIsEqual(name, ctx->primitives[i].name)) {
+            Fisk_Error("[ERROR]: Primitive name is already taken", ctx);
+            return;
+        }
+    }
+ 
+    struct fisk_primitive* primitive = &ctx->primitives[ctx->primitive_count];
+
+    int name_length = Fisk_Strlen(name);
+    if (name_length >= FISK_PRIMITIVE_LIMIT) {
+        Fisk_Error("[ERROR]: Primitive name is too long", ctx);
+        return;
+    }
+
+    // Copy string over (TODO: Maybe make this a seperate function. Too lazy to do it rn) (Kinda small so i might not need to...)
+    for (int i=0; i<name_length; i++) {
+        primitive->name[i] = name[i];
+    }
+
+    primitive->c_func = func;
+
+    ctx->primitive_count++;
+}
+
+// What
+void (*Fisk_GetPrimitiveFunc(char* name, struct fisk_ctx* ctx))(struct fisk_ctx*) {
+    for (int i=0; i<ctx->primitive_count; i++) {
+        if (Fisk_StrIsEqual(name, ctx->primitives[i].name)) return ctx->primitives[i].c_func;
+    }
+
+    return FISK_NULL;
+}
 ///////////////////////
 
 static inline void Fisk_StrToItem(struct fisk_token token, struct fisk_scanner* scanner, struct fisk_item* item, struct fisk_ctx* ctx) {
