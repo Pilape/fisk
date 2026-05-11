@@ -59,8 +59,8 @@ int main() {
 
     Fisk_AddPrimitive(&Primitive_PrintSomethingFunny, "funny", &fisk);
     Fisk_AddPrimitive(&Primitive_Add, "+", &fisk);
-    if (fisk.state != FISK_OK) {
-        puts(fisk.error_msg);
+    if (fisk.status.code != FISK_OK) {
+        puts(fisk_error_messages[fisk.status.message_index]);
         return 1;
     }
 
@@ -74,8 +74,8 @@ int main() {
         fgets(buf, sizeof(buf), stdin);
         
         Fisk_Eval(buf, strlen(buf), &fisk);
-        if (fisk.state != FISK_OK) {
-            puts(fisk.error_msg);
+        if (fisk.status.code != FISK_OK) {
+            puts(fisk_error_messages[fisk.status.message_index]);
             return 1;
         }
         

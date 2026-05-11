@@ -39,8 +39,6 @@
 
 #define FISK_NULL ((void*)0)
 
-#define FISK_ERROR_SIZE 512 // Size of error message buffer
-
 ////////////////STRUCTS/////////////////
 
 struct fisk_ctx;
@@ -81,10 +79,41 @@ struct fisk_symbol {
     struct fisk_node* value;
 };
 
-enum fisk_state {
+
+enum fisk_status_code {
     FISK_OK,
     FISK_ERROR,
 };
+
+
+enum fisk_error_type {
+    FISK_ERR_UNTERM_COMMENT,
+    FISK_ERR_UNTERM_STRING,
+    FISK_ERR_UNKOWN_WORD,
+
+    FISK_ERR_OVERFLOW,
+    FISK_ERR_UNDERFLOW,
+    FISK_ERR_NO_MEMORY,
+
+    FISK_ERR_TOO_MANY_PRIM,
+    FISK_ERR_PRIM_TOO_LONG,
+    FISK_ERR_PRIM_TAKEN,
+};
+
+const char* fisk_error_messages[] = {
+    "Unterminated comment",
+    "Unterminated string",
+    "Unkown word",
+
+    "Stack overflow",
+    "Stack underflow",
+    "Out of memory",
+
+    "Max primitive count exceeded",
+    "Primitive name is too long",
+    "A primitive with this name is already in use",
+};
+
 
 struct fisk_ctx {
     struct fisk_node nodes[FISK_NODE_COUNT];
@@ -98,13 +127,14 @@ struct fisk_ctx {
     struct fisk_symbol symbols[FISK_SYMBOL_LIMIT];
     int symbol_count;
 
-    char error_msg[FISK_ERROR_SIZE+1]; // +1 for '\0'
-    enum fisk_state state;
+    struct {
+        enum fisk_status_code code;
+        enum fisk_error_type message_index;
+    } status;
 };
 
 ////////////////////////////////////////
 
-void Fisk_Error(char* msg, struct fisk_ctx* ctx);
 struct fisk_node* Fisk_AllocateNode(struct fisk_ctx* ctx);
 void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fisk_ctx* ctx);
 void Fisk_Push(struct fisk_item item, struct fisk_ctx* ctx);
@@ -112,6 +142,18 @@ struct fisk_item Fisk_Pop(struct fisk_ctx* ctx);
 void Fisk_Eval(char* input, unsigned int input_len, struct fisk_ctx* ctx);
 
 #endif // FISK_HEADER
+
+
+
+
+
+
+
+
+
+
+
+
 #ifdef FISK_IMPLEMENTATION
 #undef FISK_IMPLEMENTATION
 
@@ -170,6 +212,17 @@ char Fisk_StrIsEqual(char* str1, char* str2) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+//////////////////////////////////////////////////////// ERROR ////////////////////////////////////////
+
+#define FISK_ERROR(type, ctx_ptr) do {       \
+    (ctx_ptr)->status.code = FISK_ERROR;     \
+    (ctx_ptr)-> status.message_index = type; \
+} while (0)                                  \
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 /////////////////////////////////////////////////////////////////////////////////////////// SCANNER ////////////////////////////////////////////////////////////////////////////////////////////
 struct fisk_scanner {
     unsigned int start, current, line, input_len;
@@ -218,7 +271,7 @@ struct fisk_token Fisk_Scan(struct fisk_scanner* scanner, struct fisk_ctx* ctx) 
                     }
                 }
                 if (scanner->current >= scanner->input_len) {
-                    Fisk_Error("[ERROR]: Unterminated string", ctx);
+                    FISK_ERROR(FISK_ERR_UNTERM_STRING, ctx);
                     return FISK_TOKEN(FISK_TOKEN_NONE);
                 }
                 return FISK_TOKEN(FISK_TOKEN_STR);
@@ -232,7 +285,7 @@ struct fisk_token Fisk_Scan(struct fisk_scanner* scanner, struct fisk_ctx* ctx) 
                     }
                 }
                 if (scanner->current >= scanner->input_len) {
-                    Fisk_Error("[ERROR]: Unterminated comment", ctx);
+                    FISK_ERROR(FISK_ERR_UNTERM_COMMENT, ctx);
                     return FISK_TOKEN(FISK_TOKEN_NONE);
                 }
                 break;
@@ -299,33 +352,19 @@ struct fisk_node* Fisk_AllocateNode(struct fisk_ctx* ctx) {
             return &(ctx->nodes[i]);
         } 
     }
-    Fisk_Error("[ERROR]: Out of memory", ctx);
+    FISK_ERROR(FISK_ERR_NO_MEMORY, ctx);
     return FISK_NULL;
-}
-
-/////// SCANNER ///////
-void Fisk_Error(char* msg, struct fisk_ctx* ctx) {
-    ctx->state = FISK_ERROR;
-    
-    int str_len = Fisk_Strlen(msg);
-    if (str_len > FISK_ERROR_SIZE) str_len = FISK_ERROR_SIZE;
-
-    for (int i=0; i<str_len; i++) {
-        ctx->error_msg[i] = msg[i];
-    }
-
-    ctx->error_msg[str_len] = '\0';
 }
 
 void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fisk_ctx* ctx) {
     if (ctx->primitive_count >= FISK_PRIMITIVE_LIMIT) {
-        Fisk_Error("[ERROR]: Primtive limit reached", ctx);
+        FISK_ERROR(FISK_ERR_TOO_MANY_PRIM, ctx);
         return;
     } 
 
     for (int i=0; i<ctx->primitive_count; i++) {
         if (Fisk_StrIsEqual(name, ctx->primitives[i].name)) {
-            Fisk_Error("[ERROR]: Primitive name is already taken", ctx);
+            FISK_ERROR(FISK_ERR_PRIM_TAKEN, ctx);
             return;
         }
     }
@@ -334,7 +373,7 @@ void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fi
 
     int name_length = Fisk_Strlen(name);
     if (name_length >= FISK_PRIMITIVE_LIMIT) {
-        Fisk_Error("[ERROR]: Primitive name is too long", ctx);
+        FISK_ERROR(FISK_ERR_PRIM_TOO_LONG, ctx);
         return;
     }
 
@@ -405,7 +444,7 @@ struct fisk_item Fisk_TokenToItem(struct fisk_token token, struct fisk_scanner* 
 
             void (*func)(struct fisk_ctx* ctx) = Fisk_GetPrimitiveFunc(symbol, ctx);
             if (func == FISK_NULL) {
-                Fisk_Error("[ERROR]: It's so over", ctx);
+                FISK_ERROR(FISK_ERR_UNKOWN_WORD, ctx);
                 break;
             }
 
@@ -413,11 +452,6 @@ struct fisk_item Fisk_TokenToItem(struct fisk_token token, struct fisk_scanner* 
             item.value.primitive = func;
             break;
         }
-
-        default:
-            // Should not be reachable (Keeping it just in case)
-            Fisk_Error("[ERROR]: Unknown token type", ctx);
-            break;
     }
 
     return item;
@@ -459,11 +493,11 @@ void Fisk_Eval(char* input, unsigned int input_len, struct fisk_ctx* ctx) {
         if (token.type == FISK_TOKEN_NONE) break;
         
         struct fisk_item item = Fisk_TokenToItem(token, &scanner, ctx);
-        if (ctx->state != FISK_OK) return;
+        if (ctx->status.code != FISK_OK) return;
         Fisk_ExecuteItem(item, ctx);
 
     }
-    if (ctx->state == FISK_ERROR) {
+    if (ctx->status.code == FISK_ERROR) {
         return;
     }
 
@@ -473,4 +507,5 @@ void Fisk_Eval(char* input, unsigned int input_len, struct fisk_ctx* ctx) {
 //////////////////////
 
 
+#undef FISK_ERROR
 #endif // FISK_IMPLEMENTATION
