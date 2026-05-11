@@ -3,7 +3,7 @@
 
 #define FISK_IMPLEMENTATION
 #define FISK_NODE_COUNT 32
-#include "lang.h"
+#include "fisk.h"
 
 void PrintItem(struct fisk_item item, struct fisk_ctx* ctx);
 
