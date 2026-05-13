@@ -397,11 +397,43 @@ void (*Fisk_GetPrimitiveFunc(char* name, struct fisk_ctx* ctx))(struct fisk_ctx*
 }
 ///////////////////////
 
+// TODO: Store tail in quotation, for faster appending (it's O(n) right now :(  )
+void Fisk_QuotationAppend(struct fisk_node** quotation, struct fisk_item item, struct fisk_ctx* ctx) {
+    if (*quotation == FISK_NULL) {
+        *quotation = Fisk_AllocateNode(ctx);
+        if (*quotation == FISK_NULL) return;
+
+        (*quotation)->item = item;
+        return;
+    }
+    
+    struct fisk_node* current = *quotation;
+
+    while (current->next != FISK_NULL) { current = current->next; }
+
+    current->next = Fisk_AllocateNode(ctx);
+    if (current->next == FISK_NULL) return;
+
+    current->next->item = item;
+}
+
 static inline void Fisk_StrToItem(struct fisk_token token, struct fisk_scanner* scanner, struct fisk_item* item, struct fisk_ctx* ctx) {
     item->type = FISK_QUOT;
-    if (token.length == 0) return;
+    item->value.quotation = FISK_NULL;
 
-    // First character
+    // Ignore the quotation marks
+    for (int i=1; i<token.length-1; i++) {
+        struct fisk_item character = {
+            .type = FISK_CHAR,
+            .value = scanner->input[i],
+        };
+    
+        Fisk_QuotationAppend(&item->value.quotation, character, ctx);
+    }
+
+    //if (token.length == 0) return;
+
+    /*// First character
     struct fisk_node* current = Fisk_AllocateNode(ctx);
     if (current == FISK_NULL) return;
     current->item.type = FISK_CHAR;
@@ -417,7 +449,7 @@ static inline void Fisk_StrToItem(struct fisk_token token, struct fisk_scanner* 
 
         current->item.type = FISK_CHAR;
         current->item.value.character = scanner->input[token.start+i]; 
-    }
+    }*/
 }
 
 struct fisk_item Fisk_TokenToItem(struct fisk_token token, struct fisk_scanner* scanner, struct fisk_ctx* ctx) {
@@ -450,6 +482,36 @@ struct fisk_item Fisk_TokenToItem(struct fisk_token token, struct fisk_scanner* 
 
             item.type = FISK_PRIM;
             item.value.primitive = func;
+            break;
+        }
+
+        case FISK_TOKEN_CURLY_L: {
+            item.type = FISK_QUOT;
+            item.value.quotation = FISK_NULL;
+
+            /*struct fisk_node** current = &item.value.quotation;
+            struct fisk_node* prev = FISK_NULL;*/
+            
+            //*current = Fisk_AllocateNode(ctx);
+            //if (*current == FISK_NULL) break;
+            
+            struct fisk_token token = Fisk_Scan(scanner, ctx);
+
+            while (token.type != FISK_TOKEN_CURLY_R) {
+                /* *current = Fisk_AllocateNode(ctx);
+                if (*current == FISK_NULL) return item; */
+
+                // (*current)->item = Fisk_TokenToItem(token, scanner, ctx);
+                
+                Fisk_QuotationAppend(&item.value.quotation, Fisk_TokenToItem(token, scanner, ctx), ctx);
+                /*prev = *current;
+                *current = (*current)->next;
+                printf("p %p\n", prev);
+                prev->next = *current;*/
+
+                token = Fisk_Scan(scanner, ctx);
+            }
+
             break;
         }
     }
