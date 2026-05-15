@@ -43,6 +43,16 @@
 
 struct fisk_ctx;
 
+struct fisk_primitive {
+    char name[FISK_SYMBOL_LENGTH];
+    void (*c_func)(struct fisk_ctx* ctx);
+};
+
+struct fisk_symbol {
+    char name[FISK_SYMBOL_LENGTH];
+    struct fisk_node* value;
+};
+
 enum fisk_type {
     FISK_NIL,
     FISK_INT,
@@ -59,24 +69,15 @@ struct fisk_item {
         int integer;
         char character;
         struct fisk_node* quotation;
-        void (*primitive)(struct fisk_ctx* ctx);
+        struct fisk_primitive* primitive;
     } value;
 };
+
 struct fisk_node {
     struct fisk_item item;
     char allocated; 
 
     struct fisk_node* next;
-};
-
-struct fisk_primitive {
-    char name[FISK_SYMBOL_LENGTH];
-    void (*c_func)(struct fisk_ctx* ctx);
-};
-
-struct fisk_symbol {
-    char name[FISK_SYMBOL_LENGTH];
-    struct fisk_node* value;
 };
 
 
@@ -388,9 +389,16 @@ void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fi
 }
 
 // What
-void (*Fisk_GetPrimitiveFunc(char* name, struct fisk_ctx* ctx))(struct fisk_ctx*) {
+/*void (*Fisk_GetPrimitiveFunc(char* name, struct fisk_ctx* ctx))(struct fisk_ctx*) {
     for (int i=0; i<ctx->primitive_count; i++) {
         if (Fisk_StrIsEqual(name, ctx->primitives[i].name)) return ctx->primitives[i].c_func;
+    }
+
+    return FISK_NULL;
+}*/
+struct fisk_primitive* Fisk_GetPrimitive(char* name, struct fisk_ctx* ctx) {
+    for (int i=0; i<ctx->primitive_count; i++) {
+        if (Fisk_StrIsEqual(name, ctx->primitives[i].name)) return &ctx->primitives[i];
     }
 
     return FISK_NULL;
@@ -474,14 +482,14 @@ struct fisk_item Fisk_TokenToItem(struct fisk_token token, struct fisk_scanner* 
             }
             symbol[token.length] = '\0';
 
-            void (*func)(struct fisk_ctx* ctx) = Fisk_GetPrimitiveFunc(symbol, ctx);
-            if (func == FISK_NULL) {
+            struct fisk_primitive* primitive = Fisk_GetPrimitive(symbol, ctx);
+            if (primitive == FISK_NULL) {
                 FISK_ERROR(FISK_ERR_UNKOWN_WORD, ctx);
                 break;
             }
 
             item.type = FISK_PRIM;
-            item.value.primitive = func;
+            item.value.primitive = primitive;
             break;
         }
 
@@ -530,7 +538,7 @@ struct fisk_item Fisk_Pop(struct fisk_ctx* ctx) {
 void Fisk_ExecuteItem(struct fisk_item item, struct fisk_ctx* ctx) {
     switch (item.type) {
         case FISK_PRIM:
-            item.value.primitive(ctx);
+            item.value.primitive->c_func(ctx);
             break;
 
         default:

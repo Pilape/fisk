@@ -32,7 +32,7 @@ void PrintItem(struct fisk_item item, struct fisk_ctx* ctx) {
             break;
 
         case FISK_PRIM:
-            printf(" [PRIMITIVE]");
+            printf(" %s", item.value.primitive->name);
             break;
 
         case FISK_NIL:
