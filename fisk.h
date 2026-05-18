@@ -425,39 +425,23 @@ void Fisk_QuotationAppend(struct fisk_node** quotation, struct fisk_item item, s
     current->next->item = item;
 }
 
-static inline void Fisk_StrToItem(struct fisk_token token, struct fisk_scanner* scanner, struct fisk_item* item, struct fisk_ctx* ctx) {
-    item->type = FISK_QUOT;
-    item->value.quotation = FISK_NULL;
+struct fisk_item Fisk_StrToItem(struct fisk_token token, struct fisk_scanner* scanner, struct fisk_ctx* ctx) {
+    struct fisk_item item = {
+        .type = FISK_QUOT,
+        .value.quotation = FISK_NULL,
+    };
 
     // Ignore the quotation marks
-    for (int i=1; i<token.length-1; i++) {
+    for (int i=token.start+1; i<token.start+token.length-1; i++) {
         struct fisk_item character = {
             .type = FISK_CHAR,
-            .value = scanner->input[i],
+            .value.character = scanner->input[i],
         };
     
-        Fisk_QuotationAppend(&item->value.quotation, character, ctx);
+        Fisk_QuotationAppend(&item.value.quotation, character, ctx);
     }
 
-    //if (token.length == 0) return;
-
-    /*// First character
-    struct fisk_node* current = Fisk_AllocateNode(ctx);
-    if (current == FISK_NULL) return;
-    current->item.type = FISK_CHAR;
-    current->item.value.character = scanner->input[token.start+1]; 
-    
-    item->value.quotation = current;
-
-    for (int i=2; i<token.length-1; i++) { // Ignore quotation marks and first char
-        current->next = Fisk_AllocateNode(ctx);
-        if (current->next == FISK_NULL) break;
-
-        current = current->next;
-
-        current->item.type = FISK_CHAR;
-        current->item.value.character = scanner->input[token.start+i]; 
-    }*/
+    return item;
 }
 
 struct fisk_item Fisk_TokenToItem(struct fisk_token token, struct fisk_scanner* scanner, struct fisk_ctx* ctx) {
@@ -471,7 +455,7 @@ struct fisk_item Fisk_TokenToItem(struct fisk_token token, struct fisk_scanner* 
             break;
 
         case FISK_TOKEN_STR:
-            Fisk_StrToItem(token, scanner, &item, ctx);
+            item = Fisk_StrToItem(token, scanner, ctx);
             break;
 
         case FISK_TOKEN_SYMBOL: {
@@ -497,25 +481,10 @@ struct fisk_item Fisk_TokenToItem(struct fisk_token token, struct fisk_scanner* 
             item.type = FISK_QUOT;
             item.value.quotation = FISK_NULL;
 
-            /*struct fisk_node** current = &item.value.quotation;
-            struct fisk_node* prev = FISK_NULL;*/
-            
-            //*current = Fisk_AllocateNode(ctx);
-            //if (*current == FISK_NULL) break;
-            
             struct fisk_token token = Fisk_Scan(scanner, ctx);
 
-            while (token.type != FISK_TOKEN_CURLY_R) {
-                /* *current = Fisk_AllocateNode(ctx);
-                if (*current == FISK_NULL) return item; */
-
-                // (*current)->item = Fisk_TokenToItem(token, scanner, ctx);
-                
+            while (token.type != FISK_TOKEN_CURLY_R) { 
                 Fisk_QuotationAppend(&item.value.quotation, Fisk_TokenToItem(token, scanner, ctx), ctx);
-                /*prev = *current;
-                *current = (*current)->next;
-                printf("p %p\n", prev);
-                prev->next = *current;*/
 
                 token = Fisk_Scan(scanner, ctx);
             }
