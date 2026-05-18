@@ -302,7 +302,7 @@ struct fisk_token Fisk_Scan(struct fisk_scanner* scanner, struct fisk_ctx* ctx) 
 
             default: {
                 enum fisk_token_type symbol_type = FISK_TOKEN_SYMBOL;
-                if (scanner->input[scanner->current] == '-') symbol_type = FISK_TOKEN_INT;
+                if (scanner->input[scanner->current] == '-' || Fisk_IsDigit(scanner->input[scanner->current])) symbol_type = FISK_TOKEN_INT;
                 //(scanner->input[scanner->current] == '-' || Fisk_IsDigit(scanner->input[scanner->current])) ? FISK_TOKEN_INT : FISK_TOKEN_SYMBOL;
 
                 while (scanner->current++ < scanner->input_len) {
