@@ -12,10 +12,10 @@
         #define FISK_STACK_SIZE 256
     #endif
 
-    // How many values/nodes are available.
+    // How many values/pool are available.
     // Basically how big the languages memory arena is.
-    #ifndef FISK_NODE_COUNT 
-    #define FISK_NODE_COUNT 0x4000
+    #ifndef FISK_POOL_SIZE 
+    #define FISK_POOL_SIZE 0x4000
     #endif
 
     // How many primitives the language can have, also used by "built in" primitives and the standard library.
@@ -117,7 +117,7 @@ const char* fisk_error_messages[] = {
 
 
 struct fisk_ctx {
-    struct fisk_node nodes[FISK_NODE_COUNT];
+    struct fisk_node pool[FISK_POOL_SIZE];
 
     struct fisk_item stack[FISK_STACK_SIZE];
     int stack_ptr;
@@ -345,14 +345,14 @@ struct fisk_token Fisk_Scan(struct fisk_scanner* scanner, struct fisk_ctx* ctx) 
 
 
 struct fisk_node* Fisk_AllocateNode(struct fisk_ctx* ctx) {
-    for (unsigned int i=0; i<FISK_NODE_COUNT; i++) {
-        if (ctx->nodes[i].allocated == 0) {
-            ctx->nodes[i].allocated = 1;
+    for (unsigned int i=0; i<FISK_POOL_SIZE; i++) {
+        if (ctx->pool[i].allocated == 0) {
+            ctx->pool[i].allocated = 1;
 
-            ctx->nodes[i].next = FISK_NULL;
-            ctx->nodes[i].item.type = FISK_NIL;
+            ctx->pool[i].next = FISK_NULL;
+            ctx->pool[i].item.type = FISK_NIL;
 
-            return &(ctx->nodes[i]);
+            return &(ctx->pool[i]);
         } 
     }
     FISK_ERROR(FISK_ERR_NO_MEMORY, ctx);
