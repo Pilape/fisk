@@ -1,4 +1,5 @@
 # fisk
+![logo](images/fisk-logo.png)
 A simple concatenative language inspired by FORTH and Lisp.
 All primitives are defined using C-functions and the language itself does not use the standard library.
 
