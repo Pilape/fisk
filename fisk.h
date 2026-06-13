@@ -1,5 +1,10 @@
 #ifndef FISK_HEADER
 #define FISK_HEADER
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ////////////////CONFIG////////////////
 
     ////////MEMORY/////////
@@ -141,6 +146,10 @@ void Fisk_AddPrimitive(void (*func)(struct fisk_ctx* ctx), char* name, struct fi
 void Fisk_Push(struct fisk_item item, struct fisk_ctx* ctx);
 struct fisk_item Fisk_Pop(struct fisk_ctx* ctx);
 void Fisk_Eval(char* input, unsigned int input_len, struct fisk_ctx* ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // FISK_HEADER
 
